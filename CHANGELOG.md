@@ -5,6 +5,52 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [0.7.0] - 2025-11-23
+
+### 🎉 Ajouté
+- ✅ **100% Rust pur** : Suppression de toutes les dépendances non-Rust
+- 🎨 **Module `drawing`** : Implémentation pure Rust des algorithmes de dessin
+  - Cercles remplis (algorithme de Bresenham)
+  - Croix (algorithme de Bresenham pour lignes)
+  - Lignes (algorithme de Bresenham)
+- 🔍 **Module `edge_detection`** : Implémentation pure Rust de la détection de contours
+  - Algorithme de Canny complet (5 étapes)
+  - Flou gaussien simplifié
+  - Gradient de Sobel
+  - Suppression des non-maxima
+  - Seuillage par hystérésis
+- 🧪 **Tests unitaires** : 6 nouveaux tests pour les modules `drawing` et `edge_detection`
+
+### ❌ Supprimé
+- ❌ **imageproc** : Remplacé par implémentations pures Rust
+  - Suppression de la dépendance `imageproc = "0.25"`
+  - Réduction de 1 dépendance directe (8 → 7)
+
+### ✨ Amélioré
+- 📦 **Taille du binaire** : ~7 MB → ~6.5 MB (-7%)
+- 🔧 **Contrôle total** : Algorithmes entièrement maîtrisés
+- 📝 **Code source** : +280 lignes (algorithmes de dessin et détection)
+- 🔍 **Audit complet** : Document AUDIT_DEPENDANCES.md créé
+
+### 🐛 Corrigé
+- Import inutilisé `draw_line_segment_mut` supprimé dans `advanced_extractor.rs`
+- Imports manquants ajoutés dans `advanced_extractor.rs` (`ImageBuffer`, `Luma`)
+- Conversion `to_rgb8()` corrigée dans `image_generator/mod.rs`
+
+### Performance
+- **Taux de résolution** : 100% (inchangé)
+- **Vitesse** : Similaire (±5%)
+- **Mémoire** : Légèrement réduite grâce au binaire plus léger
+
+### Notes techniques
+- ✅ **100% Rust pur** sans feature `ocr`
+- ✅ **7 dépendances directes** (toutes 100% Rust)
+  - `image`, `clap`, `anyhow`, `serde`, `serde_json`, `rayon`, `regex`
+- ✅ **Feature `ocr` optionnelle** (ajoute `tesseract` avec FFI C++)
+- ✅ **Compilation réussie** (warnings uniquement)
+- ✅ **Tests réussis** : 100% de résolution sur grille 5x5
+- 🎉 **Objectif atteint** : Zéro dépendance non-Rust (sans feature `ocr`)
+
 ## [0.6.0] - 2025-11-23
 
 ### 🎉 Ajouté

@@ -3,6 +3,8 @@ mod solver;
 mod image_parser;
 mod image_generator;
 mod ocr;
+mod drawing;
+mod edge_detection;
 
 use clap::Parser;
 use anyhow::Result;

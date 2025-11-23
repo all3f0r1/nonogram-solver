@@ -1,5 +1,5 @@
 use image::{DynamicImage, GrayImage};
-use imageproc::edges::canny;
+use crate::edge_detection::canny;
 
 /// Détecteur de grille avancé pour l'analyse automatique
 pub struct GridDetector;

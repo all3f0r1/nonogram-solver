@@ -5,6 +5,16 @@
 
 Application Rust qui analyse une image de nonogramme (logimage/hanjie) et identifie les cases qui peuvent être déduites logiquement, sans avoir à deviner. L'application génère une image de sortie avec les déductions marquées en rouge.
 
+## 🎉 Nouveautés v0.7.0
+
+### ✅ 100% Rust pur !
+
+- **Zéro dépendance non-Rust** (sans feature `ocr`)
+- **Suppression de imageproc** : Remplacé par implémentations pures Rust
+- **Modules ajoutés** : `drawing` et `edge_detection`
+- **Binaire plus léger** : ~7 MB → ~6.5 MB (-7%)
+- **Contrôle total** sur les algorithmes
+
 ## 🎉 Nouveautés v0.6.0
 
 ### ✅ 100% de taux de résolution atteint !

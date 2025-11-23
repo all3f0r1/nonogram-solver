@@ -1,7 +1,6 @@
-use image::{DynamicImage, GenericImageView, Rgb, ImageBuffer, Luma};
+use image::{DynamicImage, GenericImageView, ImageBuffer, Luma};
 use regex::Regex;
 use crate::grid::Constraints;
-use imageproc::drawing::draw_line_segment_mut;
 
 #[cfg(feature = "ocr")]
 use tesseract::Tesseract;
