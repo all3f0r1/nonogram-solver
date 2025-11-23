@@ -14,6 +14,11 @@ impl ContradictionDetector {
     }
 
     /// Vérifie si la grille contient des contradictions
+    pub fn has_contradiction(&mut self, grid: &Grid, constraints: &Constraints) -> bool {
+        !self.is_valid(grid, constraints)
+    }
+
+    /// Vérifie si la grille est valide (pas de contradictions)
     pub fn is_valid(&mut self, grid: &Grid, constraints: &Constraints) -> bool {
         if !self.check_basic_contradictions(grid, constraints) {
             return false;

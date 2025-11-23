@@ -5,6 +5,7 @@ pub mod advanced_heuristics;
 pub mod advanced_solver;
 pub mod contradiction_detector;
 pub mod backtracking;
+pub mod backtracking_optimized;
 pub mod parallel_solver;
 pub mod ultimate_solver;
 
@@ -14,6 +15,7 @@ pub use advanced_heuristics::AdvancedHeuristics;
 pub use advanced_solver::{AdvancedSolver, AdvancedSolverConfig};
 pub use contradiction_detector::ContradictionDetector;
 pub use backtracking::{BacktrackingSolver, BacktrackingConfig};
+pub use backtracking_optimized::{OptimizedBacktrackingSolver, OptimizedBacktrackingConfig};
 pub use parallel_solver::ParallelSolver;
 pub use ultimate_solver::{UltimateSolver, UltimateSolverConfig};
 

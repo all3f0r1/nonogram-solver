@@ -1,7 +1,7 @@
 use crate::grid::{Grid, Constraints};
 use crate::solver::{Deduction, AdvancedSolver, AdvancedSolverConfig};
 use super::parallel_solver::ParallelSolver;
-use super::backtracking::{BacktrackingSolver, BacktrackingConfig};
+use super::backtracking_optimized::{OptimizedBacktrackingSolver, OptimizedBacktrackingConfig};
 
 /// Configuration pour le solveur ultime
 #[derive(Debug, Clone)]
@@ -107,13 +107,16 @@ impl UltimateSolver {
                 println!("   Cases restantes: {}", grid.count_empty_cells());
             }
 
-            let backtracking_config = BacktrackingConfig {
+            let backtracking_config = OptimizedBacktrackingConfig {
                 max_depth: self.config.backtracking_depth,
-                max_states: 10000,
+                max_states: 100000,
+                use_constraint_propagation: true,
+                use_naked_singles: true,
+                use_hidden_singles: true,
                 verbose: self.config.verbose,
             };
 
-            let mut backtracking_solver = BacktrackingSolver::with_config(backtracking_config);
+            let mut backtracking_solver = OptimizedBacktrackingSolver::with_config(backtracking_config);
             let backtracking_deductions = backtracking_solver.solve(grid, constraints)?;
 
             if !backtracking_deductions.is_empty() {

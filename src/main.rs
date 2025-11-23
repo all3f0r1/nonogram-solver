@@ -11,6 +11,7 @@ use grid::Constraints;
 use solver::{NonogramSolver, AdvancedSolver, AdvancedSolverConfig, UltimateSolver, UltimateSolverConfig};
 use image_parser::ImageParser;
 use image_generator::ImageGenerator;
+use ocr::AdvancedConstraintExtractor;
 
 /// Solveur de nonogramme (logimage/hanjie) par déduction logique
 #[derive(Parser, Debug)]
@@ -20,11 +21,15 @@ struct Args {
     #[arg(short, long)]
     input: String,
 
-    /// Chemin vers le fichier JSON contenant les contraintes (optionnel si --use-ocr est activé)
+    /// Chemin vers le fichier JSON contenant les contraintes (optionnel si --auto est activé)
     #[arg(short, long)]
     constraints: Option<String>,
 
-    /// Utiliser l'OCR pour extraire automatiquement les contraintes de l'image
+    /// Extraction automatique des contraintes depuis l'image (sans OCR, par détection de grille)
+    #[arg(long)]
+    auto: bool,
+
+    /// Utiliser l'OCR pour extraire automatiquement les contraintes de l'image (nécessite --features ocr)
     #[arg(long)]
     use_ocr: bool,
 
@@ -61,21 +66,46 @@ fn main() -> Result<()> {
     let args = Args::parse();
 
     // Charger ou extraire les contraintes
-    let constraints = if args.use_ocr {
+    let constraints = if args.auto || args.use_ocr {
         if args.verbose {
-            println!("🔍 Extraction des contraintes par OCR...");
+            if args.use_ocr {
+                println!("🔍 Extraction des contraintes par OCR...");
+            } else {
+                println!("🤖 Détection automatique de la grille et extraction des contraintes...");
+            }
         }
         
-        // Charger l'image d'abord pour l'OCR
-        let _input_image = ImageParser::load_image(&args.input)
+        // Charger l'image d'abord
+        let input_image = ImageParser::load_image(&args.input)
             .map_err(|e| anyhow::anyhow!("Erreur lors du chargement de l'image: {}", e))?;
         
-        // Demander les dimensions à l'utilisateur ou les déduire
-        // Pour l'instant, retourner une erreur si pas de fichier de contraintes
-        return Err(anyhow::anyhow!("L'extraction OCR nécessite de spécifier les dimensions de la grille. Utilisez --constraints pour fournir un fichier JSON."));
+        // Extraire automatiquement les contraintes
+        if args.use_ocr {
+            #[cfg(feature = "ocr")]
+            {
+                AdvancedConstraintExtractor::extract_auto(&input_image)
+                    .map_err(|e| anyhow::anyhow!("Erreur lors de l'extraction OCR: {}", e))?
+            }
+            #[cfg(not(feature = "ocr"))]
+            {
+                return Err(anyhow::anyhow!("La fonctionnalité OCR n'est pas activée. Recompilez avec --features ocr"));
+            }
+        } else {
+            // Mode auto: détecter la grille sans OCR
+            #[cfg(feature = "ocr")]
+            {
+                AdvancedConstraintExtractor::extract_auto(&input_image)
+                    .map_err(|e| anyhow::anyhow!("Erreur lors de l'extraction automatique: {}. Essayez avec --constraints", e))?
+            }
+            #[cfg(not(feature = "ocr"))]
+            {
+                AdvancedConstraintExtractor::extract_from_image_heuristic(&input_image)
+                    .map_err(|e| anyhow::anyhow!("Erreur lors de la détection de grille: {}. Utilisez --constraints", e))?
+            }
+        }
     } else {
         let constraints_file = args.constraints
-            .ok_or_else(|| anyhow::anyhow!("Vous devez spécifier --constraints ou utiliser --use-ocr"))?;
+            .ok_or_else(|| anyhow::anyhow!("Vous devez spécifier --constraints, --auto ou --use-ocr"))?;
         
         if args.verbose {
             println!("🔍 Chargement des contraintes depuis: {}", constraints_file);

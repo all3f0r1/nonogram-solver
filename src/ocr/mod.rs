@@ -2,6 +2,9 @@ use image::DynamicImage;
 use regex::Regex;
 use crate::grid::Constraints;
 
+pub mod advanced_extractor;
+pub use advanced_extractor::AdvancedConstraintExtractor;
+
 #[cfg(feature = "ocr")]
 use tesseract::Tesseract;
 
