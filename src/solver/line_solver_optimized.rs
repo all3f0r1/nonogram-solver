@@ -75,6 +75,11 @@ impl OptimizedLineSolver {
         Ok(deductions)
     }
 
+    /// Génère les configurations valides (interface publique)
+    pub fn generate_valid_configurations(&self, line: &[CellState], constraint: &[usize]) -> Vec<Vec<CellState>> {
+        self.generate_valid_configurations_optimized(line, constraint).unwrap_or_default()
+    }
+
     /// Génère les configurations valides avec optimisations
     fn generate_valid_configurations_optimized(&self, line: &[CellState], constraint: &[usize]) -> Result<Vec<Vec<CellState>>, String> {
         let length = line.len();

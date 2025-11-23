@@ -1,13 +1,21 @@
-mod line_solver;
-mod line_solver_optimized;
-mod cross_analysis;
-mod advanced_heuristics;
-mod advanced_solver;
+pub mod line_solver;
+pub mod line_solver_optimized;
+pub mod cross_analysis;
+pub mod advanced_heuristics;
+pub mod advanced_solver;
+pub mod contradiction_detector;
+pub mod backtracking;
+pub mod parallel_solver;
+pub mod ultimate_solver;
 
 pub use line_solver_optimized::OptimizedLineSolver;
 pub use cross_analysis::CrossAnalyzer;
 pub use advanced_heuristics::AdvancedHeuristics;
 pub use advanced_solver::{AdvancedSolver, AdvancedSolverConfig};
+pub use contradiction_detector::ContradictionDetector;
+pub use backtracking::{BacktrackingSolver, BacktrackingConfig};
+pub use parallel_solver::ParallelSolver;
+pub use ultimate_solver::{UltimateSolver, UltimateSolverConfig};
 
 use crate::grid::{Grid, CellState, Constraints};
 

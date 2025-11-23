@@ -8,7 +8,7 @@ use clap::Parser;
 use anyhow::Result;
 
 use grid::Constraints;
-use solver::{NonogramSolver, AdvancedSolver, AdvancedSolverConfig};
+use solver::{NonogramSolver, AdvancedSolver, AdvancedSolverConfig, UltimateSolver, UltimateSolverConfig};
 use image_parser::ImageParser;
 use image_generator::ImageGenerator;
 
@@ -51,6 +51,10 @@ struct Args {
     /// Utiliser le solveur avancé (techniques avancées)
     #[arg(long)]
     advanced: bool,
+
+    /// Utiliser le solveur ultime (toutes les techniques + backtracking + parallélisation)
+    #[arg(long)]
+    ultimate: bool,
 }
 
 fn main() -> Result<()> {
@@ -141,7 +145,22 @@ fn main() -> Result<()> {
     }
 
     // Choisir le solveur en fonction des options
-    let deductions = if args.advanced {
+    let deductions = if args.ultimate {
+        if args.verbose {
+            println!("🌟 Résolution avec le solveur ultime...");
+        }
+
+        let config = UltimateSolverConfig {
+            use_parallel: true,
+            use_backtracking: true,
+            backtracking_depth: 10,
+            verbose: args.verbose,
+        };
+
+        let mut ultimate_solver = UltimateSolver::with_config(config);
+        ultimate_solver.solve(&mut grid, &constraints)
+            .map_err(|e| anyhow::anyhow!("Erreur lors de la résolution: {}", e))?
+    } else if args.advanced {
         if args.verbose {
             println!("🚀 Résolution avec le solveur avancé...");
         }
