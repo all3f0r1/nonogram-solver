@@ -5,6 +5,64 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [0.8.0] - 2025-11-23
+
+### 🎉 Ajouté
+- 🎨 **Interface graphique (GUI)** avec Slint
+  - Look-and-feel natif sur Windows, Linux et macOS
+  - Prévisualisation côte-à-côte de l'entrée et du résultat
+  - Progression en temps réel pendant la résolution
+  - Dialogue de fichiers intuitif (rfd)
+  - Support de l'accessibilité (lecteurs d'écran)
+  - Responsive design (s'adapte à la taille de la fenêtre)
+  - Trois modes de solveur (Basique/Avancé/Ultime)
+  - Détection automatique des paramètres avec option manuelle
+- 📚 **Documentation GUI complète** dans GUI_README.md
+- 🔍 **Audit approfondi** des bibliothèques GUI Rust (43 bibliothèques analysées)
+  - Rapport complet dans AUDIT_GUI_RUST.md
+  - Comparaison détaillée de Slint, FLTK-rs, Dioxus, egui, GTK 4, etc.
+  - Justification du choix de Slint
+- 🎨 **Conception détaillée** de l'interface dans GUI_DESIGN.md
+  - Wireframes et spécifications
+  - Architecture des composants
+  - Guide d'accessibilité
+
+### ✨ Modifié
+- 📦 **Cargo.toml**: Ajout de la feature `gui` avec Slint et rfd
+  - Nouveau binaire `nonogram-solver-gui`
+  - Build-dependencies pour slint-build
+- 🏗️ **Architecture**: Nouveaux modules et fichiers
+  - `src/gui/` (mod.rs, logic.rs)
+  - `src/gui_main.rs` (point d'entrée GUI)
+  - `ui/app.slint` (interface Slint)
+  - `build.rs` (script de build)
+- 📝 **Version**: Mise à jour à 0.8.0
+
+### 🔧 Technique
+- **Dépendances GUI**: 452 dépendances transitives pour Slint
+- **Taille du binaire**: ~6.5 MB (CLI) + ~15 MB (GUI)
+- **Compilation**: 10-15 minutes pour la première compilation GUI
+- **Plateformes**: Windows, Linux, macOS
+
+### 📋 Limitations actuelles
+- ⚠️ **Contraintes JSON requises**: Fichier .json avec contraintes doit exister à côté de l'image
+- ⚠️ **Sauvegarde non implémentée**: Dialogue s'ouvre mais ne sauvegarde pas encore
+- ⚠️ **Temps de compilation**: Première compilation GUI très longue (452 dépendances)
+
+### 🎯 Prochaines étapes (v0.9.0)
+- ✅ Extraction automatique des contraintes (OCR intégré dans GUI)
+- ✅ Sauvegarde du résultat fonctionnelle
+- ✅ Historique des résolutions
+- ✅ Zoom et pan sur les images
+
+### Notes techniques
+- ✅ **Slint sélectionné** comme meilleur choix pour look-and-feel natif
+- ✅ **Architecture GUI complète** implémentée
+- ✅ **Callbacks Rust** pour toutes les interactions
+- ✅ **Threading** pour ne pas bloquer l'interface pendant la résolution
+- ✅ **Accessibilité** intégrée dès le départ
+- 🎉 **Première version avec interface graphique** !
+
 ## [0.7.0] - 2025-11-23
 
 ### 🎉 Ajouté

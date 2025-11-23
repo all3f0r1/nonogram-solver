@@ -1,6 +1,6 @@
 [package]
 name = "nonogram-solver"
-version = "0.7.0"
+version = "0.8.0"
 edition = "2021"
 
 [dependencies]
@@ -12,10 +12,13 @@ serde_json = "1.0"
 rayon = "1.10"
 tesseract = { version = "0.15", optional = true }
 regex = "1.10"
+slint = { version = "1.9", optional = true }
+rfd = { version = "0.15", optional = true }
 
 [features]
 default = []
 ocr = ["tesseract"]
+gui = ["slint", "rfd", "slint-build"]
 
 [profile.dev]
 opt-level = 1
@@ -23,3 +26,15 @@ opt-level = 1
 [profile.release]
 opt-level = 3
 lto = true
+
+[[bin]]
+name = "nonogram-solver"
+path = "src/main.rs"
+
+[[bin]]
+name = "nonogram-solver-gui"
+path = "src/gui_main.rs"
+required-features = ["gui"]
+
+[build-dependencies]
+slint-build = { version = "1.9", optional = true }

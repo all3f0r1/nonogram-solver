@@ -1,0 +1,311 @@
+import { Button, VerticalBox, HorizontalBox, LineEdit, CheckBox, GridBox, GroupBox, ProgressIndicator, ScrollView } from "std-widgets.slint";
+
+export struct SolverMode {
+    name: string,
+    value: int,
+}
+
+export component MainWindow inherits Window {
+    title: "Nonogram Solver";
+    preferred-width: 1100px;
+    preferred-height: 750px;
+    min-width: 900px;
+    min-height: 650px;
+    
+    // Propriétés
+    in-out property <image> input-image;
+    in-out property <image> result-image;
+    in-out property <string> file-path: "";
+    in-out property <int> solver-mode: 2; // 0: basique, 1: avancé, 2: ultime
+    in-out property <bool> auto-detect: true;
+    in-out property <int> cell-size: 100;
+    in-out property <int> margin-left: 50;
+    in-out property <int> margin-top: 50;
+    in-out property <float> progress: 0;
+    in-out property <string> status: "Prêt";
+    in-out property <bool> can-load: false;
+    in-out property <bool> can-solve: false;
+    in-out property <bool> can-save: false;
+    in-out property <bool> is-solving: false;
+    
+    // Callbacks
+    callback browse-file();
+    callback load-image();
+    callback solve();
+    callback save-result();
+    
+    VerticalBox {
+        padding: 16px;
+        spacing: 16px;
+        
+        // Images
+        HorizontalBox {
+            spacing: 16px;
+            
+            // Image d'entrée
+            VerticalBox {
+                spacing: 8px;
+                Text {
+                    text: "Image d'entrée";
+                    font-weight: 600;
+                    font-size: 14px;
+                }
+                Rectangle {
+                    border-width: 2px;
+                    border-color: #ddd;
+                    border-radius: 4px;
+                    background: #f9f9f9;
+                    min-width: 450px;
+                    min-height: 450px;
+                    
+                    if input-image.width > 0: Image {
+                        source: input-image;
+                        width: 100%;
+                        height: 100%;
+                        image-fit: contain;
+                    }
+                    
+                    if input-image.width == 0: Text {
+                        text: "Aucune image chargée";
+                        color: #999;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+            
+            // Image de résultat
+            VerticalBox {
+                spacing: 8px;
+                Text {
+                    text: "Résultat";
+                    font-weight: 600;
+                    font-size: 14px;
+                }
+                Rectangle {
+                    border-width: 2px;
+                    border-color: #ddd;
+                    border-radius: 4px;
+                    background: #f9f9f9;
+                    min-width: 450px;
+                    min-height: 450px;
+                    
+                    if result-image.width > 0: Image {
+                        source: result-image;
+                        width: 100%;
+                        height: 100%;
+                        image-fit: contain;
+                    }
+                    
+                    if result-image.width == 0: Text {
+                        text: "Pas encore de résultat";
+                        color: #999;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+        
+        // Paramètres
+        GroupBox {
+            title: "Paramètres";
+            
+            VerticalBox {
+                spacing: 12px;
+                
+                // Sélection de fichier
+                HorizontalBox {
+                    spacing: 8px;
+                    Text {
+                        text: "Fichier image:";
+                        vertical-alignment: center;
+                        min-width: 100px;
+                    }
+                    LineEdit {
+                        text: file-path;
+                        read-only: true;
+                        placeholder-text: "Aucun fichier sélectionné";
+                        horizontal-stretch: 1;
+                    }
+                    Button {
+                        text: "Parcourir...";
+                        clicked => { browse-file(); }
+                    }
+                }
+                
+                // Choix du solveur
+                HorizontalBox {
+                    spacing: 16px;
+                    Text {
+                        text: "Solveur:";
+                        vertical-alignment: center;
+                        min-width: 100px;
+                    }
+                    HorizontalBox {
+                        spacing: 16px;
+                        TouchArea {
+                            width: 80px;
+                            clicked => { solver-mode = 0; }
+                            HorizontalBox {
+                                spacing: 4px;
+                                Rectangle {
+                                    width: 16px;
+                                    height: 16px;
+                                    border-radius: 8px;
+                                    border-width: 2px;
+                                    border-color: solver-mode == 0 ? #0078d4 : #999;
+                                    background: solver-mode == 0 ? #0078d4 : transparent;
+                                }
+                                Text {
+                                    text: "Basique";
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                        TouchArea {
+                            width: 80px;
+                            clicked => { solver-mode = 1; }
+                            HorizontalBox {
+                                spacing: 4px;
+                                Rectangle {
+                                    width: 16px;
+                                    height: 16px;
+                                    border-radius: 8px;
+                                    border-width: 2px;
+                                    border-color: solver-mode == 1 ? #0078d4 : #999;
+                                    background: solver-mode == 1 ? #0078d4 : transparent;
+                                }
+                                Text {
+                                    text: "Avancé";
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                        TouchArea {
+                            width: 80px;
+                            clicked => { solver-mode = 2; }
+                            HorizontalBox {
+                                spacing: 4px;
+                                Rectangle {
+                                    width: 16px;
+                                    height: 16px;
+                                    border-radius: 8px;
+                                    border-width: 2px;
+                                    border-color: solver-mode == 2 ? #0078d4 : #999;
+                                    background: solver-mode == 2 ? #0078d4 : transparent;
+                                }
+                                Text {
+                                    text: "Ultime";
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Détection automatique
+                HorizontalBox {
+                    spacing: 8px;
+                    CheckBox {
+                        text: "Détection automatique";
+                        checked <=> auto-detect;
+                    }
+                }
+                
+                // Paramètres manuels (si détection auto désactivée)
+                if !auto-detect: GridBox {
+                    spacing: 8px;
+                    Row {
+                        Text {
+                            text: "Taille de cellule (px):";
+                            col: 0;
+                            row: 0;
+                        }
+                        LineEdit {
+                            text: cell-size;
+                            input-type: number;
+                            col: 1;
+                            row: 0;
+                            edited(value) => {
+                                cell-size = value.to-float().round();
+                            }
+                        }
+                    }
+                    Row {
+                        Text {
+                            text: "Marge gauche (px):";
+                            col: 0;
+                            row: 1;
+                        }
+                        LineEdit {
+                            text: margin-left;
+                            input-type: number;
+                            col: 1;
+                            row: 1;
+                            edited(value) => {
+                                margin-left = value.to-float().round();
+                            }
+                        }
+                    }
+                    Row {
+                        Text {
+                            text: "Marge haute (px):";
+                            col: 0;
+                            row: 2;
+                        }
+                        LineEdit {
+                            text: margin-top;
+                            input-type: number;
+                            col: 1;
+                            row: 2;
+                            edited(value) => {
+                                margin-top = value.to-float().round();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Progression
+        if is-solving: GroupBox {
+            title: "Progression";
+            
+            VerticalBox {
+                spacing: 8px;
+                ProgressIndicator {
+                    progress: progress / 100;
+                }
+                Text {
+                    text: status;
+                    horizontal-alignment: center;
+                }
+            }
+        }
+        
+        // Boutons
+        HorizontalBox {
+            spacing: 12px;
+            alignment: center;
+            
+            Button {
+                text: "Charger";
+                enabled: can-load && !is-solving;
+                clicked => { load-image(); }
+                primary: true;
+            }
+            Button {
+                text: "Résoudre";
+                enabled: can-solve && !is-solving;
+                clicked => { solve(); }
+                primary: true;
+            }
+            Button {
+                text: "Sauvegarder";
+                enabled: can-save && !is-solving;
+                clicked => { save-result(); }
+            }
+        }
+    }
+}
