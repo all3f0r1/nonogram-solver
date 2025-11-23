@@ -1,7 +1,13 @@
 mod line_solver;
 mod line_solver_optimized;
+mod cross_analysis;
+mod advanced_heuristics;
+mod advanced_solver;
 
 pub use line_solver_optimized::OptimizedLineSolver;
+pub use cross_analysis::CrossAnalyzer;
+pub use advanced_heuristics::AdvancedHeuristics;
+pub use advanced_solver::{AdvancedSolver, AdvancedSolverConfig};
 
 use crate::grid::{Grid, CellState, Constraints};
 

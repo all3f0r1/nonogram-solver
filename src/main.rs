@@ -8,7 +8,7 @@ use clap::Parser;
 use anyhow::Result;
 
 use grid::Constraints;
-use solver::NonogramSolver;
+use solver::{NonogramSolver, AdvancedSolver, AdvancedSolverConfig};
 use image_parser::ImageParser;
 use image_generator::ImageGenerator;
 
@@ -47,6 +47,10 @@ struct Args {
     /// Mode verbeux pour afficher les détails
     #[arg(short, long)]
     verbose: bool,
+
+    /// Utiliser le solveur avancé (techniques avancées)
+    #[arg(long)]
+    advanced: bool,
 }
 
 fn main() -> Result<()> {
@@ -136,21 +140,41 @@ fn main() -> Result<()> {
         println!("✓ Grille extraite");
     }
 
-    if args.verbose {
-        println!("🧩 Résolution de la grille par déduction logique...");
-    }
+    // Choisir le solveur en fonction des options
+    let deductions = if args.advanced {
+        if args.verbose {
+            println!("🚀 Résolution avec le solveur avancé...");
+        }
 
-    let mut solver = NonogramSolver::new();
-    let deductions = solver.solve(&mut grid, &constraints)
-        .map_err(|e| anyhow::anyhow!("Erreur lors de la résolution: {}", e))?;
+        let config = AdvancedSolverConfig {
+            use_cross_analysis: true,
+            use_advanced_heuristics: true,
+            max_iterations: 100,
+            verbose: args.verbose,
+        };
 
-    if args.verbose {
-        println!("✓ Résolution terminée: {} déductions trouvées", deductions.len());
-        let filled_count = deductions.iter().filter(|d| d.state == grid::CellState::Filled).count();
-        let crossed_count = deductions.iter().filter(|d| d.state == grid::CellState::Crossed).count();
-        println!("   - Cases noires déduites: {}", filled_count);
-        println!("   - Cases barrées déduites: {}", crossed_count);
-    }
+        let mut advanced_solver = AdvancedSolver::with_config(config);
+        advanced_solver.solve(&mut grid, &constraints)
+            .map_err(|e| anyhow::anyhow!("Erreur lors de la résolution: {}", e))?
+    } else {
+        if args.verbose {
+            println!("🧩 Résolution de la grille par déduction logique...");
+        }
+
+        let mut solver = NonogramSolver::new();
+        let deductions = solver.solve(&mut grid, &constraints)
+            .map_err(|e| anyhow::anyhow!("Erreur lors de la résolution: {}", e))?;
+
+        if args.verbose {
+            println!("✓ Résolution terminée: {} déductions trouvées", deductions.len());
+            let filled_count = deductions.iter().filter(|d| d.state == grid::CellState::Filled).count();
+            let crossed_count = deductions.iter().filter(|d| d.state == grid::CellState::Crossed).count();
+            println!("   - Cases noires déduites: {}", filled_count);
+            println!("   - Cases barrées déduites: {}", crossed_count);
+        }
+
+        deductions
+    };
 
     if deductions.is_empty() {
         println!("ℹ️  Aucune nouvelle déduction possible avec la logique actuelle.");

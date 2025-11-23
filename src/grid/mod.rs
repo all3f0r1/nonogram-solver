@@ -102,6 +102,36 @@ impl Grid {
         }
         Ok(())
     }
+
+    /// Compte le nombre de cases vides
+    pub fn count_empty_cells(&self) -> usize {
+        self.cells
+            .iter()
+            .flat_map(|row| row.iter())
+            .filter(|&&cell| cell == CellState::Empty)
+            .count()
+    }
+
+    /// Compte le nombre de cases remplies
+    pub fn count_filled_cells(&self) -> usize {
+        self.cells
+            .iter()
+            .flat_map(|row| row.iter())
+            .filter(|&&cell| cell == CellState::Filled)
+            .count()
+    }
+
+    /// Vérifie si la grille est valide (pas de contradictions évidentes)
+    pub fn is_valid(&self) -> bool {
+        // Pour l'instant, toujours valide
+        // Cette méthode sera étendue avec la détection de contradictions
+        true
+    }
+
+    /// Crée une copie de la grille
+    pub fn clone_grid(&self) -> Self {
+        self.clone()
+    }
 }
 
 #[cfg(test)]
