@@ -44,7 +44,7 @@ struct Args {
     #[arg(long)]
     margin_top: Option<u32>,
 
-    /// Mode verbeux pour afficher les détails du traitement
+    /// Mode verbeux pour afficher les détails
     #[arg(short, long)]
     verbose: bool,
 }
@@ -136,7 +136,6 @@ fn main() -> Result<()> {
         println!("✓ Grille extraite");
     }
 
-    // Résoudre la grille
     if args.verbose {
         println!("🧩 Résolution de la grille par déduction logique...");
     }
@@ -147,8 +146,6 @@ fn main() -> Result<()> {
 
     if args.verbose {
         println!("✓ Résolution terminée: {} déductions trouvées", deductions.len());
-        
-        // Compter les types de déductions
         let filled_count = deductions.iter().filter(|d| d.state == grid::CellState::Filled).count();
         let crossed_count = deductions.iter().filter(|d| d.state == grid::CellState::Crossed).count();
         println!("   - Cases noires déduites: {}", filled_count);

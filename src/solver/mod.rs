@@ -90,6 +90,11 @@ impl NonogramSolver {
         let mut grid_copy = grid.clone();
         self.solve(&mut grid_copy, constraints)
     }
+
+    /// Vide le cache du line solver
+    pub fn clear_cache(&mut self) {
+        self.line_solver.clear_cache();
+    }
 }
 
 impl Default for NonogramSolver {

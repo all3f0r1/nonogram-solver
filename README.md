@@ -262,7 +262,14 @@ Grâce aux optimisations implémentées:
 
 Le cache permet de réutiliser les calculs entre itérations, réduisant significativement le temps de résolution.
 
-## 🆕 Nouveautés v0.2.0
+## 🆕 Nouveautés v0.3.0 (En cours)
+
+- 📚 **Documentation complète** des techniques avancées de résolution (voir [ADVANCED_TECHNIQUES.md](ADVANCED_TECHNIQUES.md))
+- 🏛️ **Architecture modulaire** conçue pour intégrer les techniques avancées
+- 🛣️ **Roadmap détaillée** pour les prochaines versions avec plan d'implémentation
+- 📊 **Amélioration du taux de résolution** prévue: de ~70% à 95%+
+
+### Historique v0.2.0
 
 - ✨ **Détection automatique améliorée** avec analyse de contours Canny
 - 🖼️ **Support étendu de formats d'image** (JPEG, BMP, GIF, TIFF, WebP)
@@ -276,17 +283,28 @@ Le cache permet de réutiliser les calculs entre itérations, réduisant signifi
 - **Grilles très complexes**: Peuvent nécessiter des techniques avancées non implémentées
 - **OCR**: Nécessite Tesseract installé et peut nécessiter des ajustements selon la qualité de l'image
 
-## 🚧 Roadmap
+## 🛣️ Roadmap
 
-- [x] Détection automatique améliorée
-- [x] Support de formats d'image étendus
-- [x] Optimisation des performances
-- [x] Intégration OCR (feature optionnelle)
-- [ ] Techniques de résolution avancées (contraintes croisées, hypothèses)
-- [ ] Interface graphique (GUI)
-- [ ] Support de nonogrammes colorés (multi-couleurs)
-- [ ] Mode interactif avec suggestions en temps réel
-- [ ] Export de la solution en format texte ou JSON
+### Version 0.3.0 (En cours)
+- ✅ **Documentation complète** des techniques avancées (voir [ADVANCED_TECHNIQUES.md](ADVANCED_TECHNIQUES.md))
+- 🚧 **Architecture modulaire** pour techniques de résolution avancées
+- 🚧 **Analyse de contraintes croisées** (overlap analysis, edge forcing)
+- 🚧 **Heuristiques avancées** (glue method, mercury method)
+- 🚧 **Détection de contradictions** (test hypothétique, blocs impossibles)
+
+### Version 0.4.0 (Prévu)
+- Backtracking intelligent avec heuristiques
+- Parallélisation avec Rayon
+- Interface graphique (GUI) avec egui
+
+### Version 0.5.0 (Prévu)
+- Application WebAssembly
+- Support des nonogrammes colorés
+- Générateur de puzzles
+
+### Versions complétées
+- [x] v0.2.0: Détection automatique améliorée, support multi-formats, optimisations
+- [x] v0.1.0: Version initiale avec line solving basique
 
 ## 📄 Licence
 

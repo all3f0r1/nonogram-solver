@@ -5,6 +5,41 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [Non publié]
+
+### À venir (v0.4.0)
+- Implémentation des techniques avancées documentées
+- Backtracking intelligent avec heuristiques
+- Parallélisation avec Rayon
+- Interface graphique (GUI) avec egui
+
+## [0.3.0] - 2025-11-23
+
+### Ajouté
+- 📚 **Documentation complète** des techniques avancées de résolution dans [ADVANCED_TECHNIQUES.md](ADVANCED_TECHNIQUES.md)
+- 🏛️ **Architecture modulaire** conçue pour intégrer les techniques avancées:
+  - Module `CrossAnalyzer` pour l'analyse de contraintes croisées (overlap analysis, edge forcing)
+  - Module `AdvancedHeuristics` pour les heuristiques avancées (glue, mercury, joining/splitting, puncturing)
+  - Module `ContradictionDetector` pour la détection de contradictions (test hypothétique, blocs impossibles)
+  - Module `BacktrackingSolver` pour le backtracking intelligent avec heuristiques
+  - Module `AdvancedSolver` pour orchestrer toutes les techniques
+- 🛣️ **Roadmap détaillée** avec plan d'implémentation sur 4 phases (12-15 semaines)
+- 📊 **Documentation des algorithmes** avec exemples et pseudocode
+- 📖 **Références académiques** et ressources en ligne
+- 👥 **Guide de contribution** pour implémenter les techniques
+
+### Modifié
+- 📝 README mis à jour avec la roadmap détaillée et les nouveautés v0.3.0
+- 🏛️ Structure du projet préparée pour l'ajout de modules avancés
+- 📈 Documentation des performances et limitations actuelles
+
+### Notes
+- **Taux de résolution actuel**: ~70% des grilles (line solving uniquement)
+- **Taux de résolution prévu**: 95%+ avec techniques avancées (v0.4.0+)
+- Les modules avancés sont **documentés et conçus** mais pas encore implémentés
+- Cette version pose les **fondations architecturales** pour les améliorations futures
+- Compilation et tests réussis, application stable
+
 ## [0.2.0] - 2025-11-23
 
 ### Ajouté
