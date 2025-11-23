@@ -11,6 +11,8 @@ pub fn run_gui() -> Result<(), Box<dyn std::error::Error>> {
     // État partagé
     let current_file = Arc::new(Mutex::new(Option::<PathBuf>::None));
     let current_constraints = Arc::new(Mutex::new(Option::<crate::grid::Constraints>::None));
+    let result_image = Arc::new(Mutex::new(Option::<image::DynamicImage>::None));
+    let history = Arc::new(Mutex::new(crate::gui::history::History::load().unwrap_or_default()));
     
     // Callback: Parcourir fichier
     {
@@ -76,6 +78,8 @@ pub fn run_gui() -> Result<(), Box<dyn std::error::Error>> {
     {
         let app_weak = app.as_weak();
         let current_file_clone = current_file.clone();
+        let result_image_clone = result_image.clone();
+        let history_clone = history.clone();
         
         app.on_solve(move || {
             let app = app_weak.upgrade().unwrap();
@@ -112,24 +116,41 @@ pub fn run_gui() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 };
                 
-                // Charger les contraintes (pour l'instant, utiliser un fichier JSON)
-                // TODO: Implémenter l'extraction automatique
-                let constraints_path = file_path.with_extension("json");
-                let constraints = match std::fs::read_to_string(&constraints_path) {
-                    Ok(json) => match serde_json::from_str(&json) {
-                        Ok(c) => c,
-                        Err(e) => {
+                // Charger les contraintes
+                // Essayer d'abord l'extraction automatique, puis fallback sur JSON
+                let constraints = {
+                    // Essayer l'extraction automatique
+                    match crate::gui::constraint_extractor::ConstraintExtractor::extract(&img) {
+                        Ok(c) => {
                             let app = app_weak_clone.upgrade().unwrap();
-                            app.set_status(format!("Erreur de parsing JSON: {}", e).into());
-                            app.set_is_solving(false);
-                            return;
+                            app.set_status("Contraintes extraites automatiquement".into());
+                            c
+                        },
+                        Err(_) => {
+                            // Fallback: essayer de charger depuis JSON
+                            let constraints_path = file_path.with_extension("json");
+                            match std::fs::read_to_string(&constraints_path) {
+                                Ok(json) => match serde_json::from_str(&json) {
+                                    Ok(c) => {
+                                        let app = app_weak_clone.upgrade().unwrap();
+                                        app.set_status("Contraintes chargées depuis JSON".into());
+                                        c
+                                    },
+                                    Err(e) => {
+                                        let app = app_weak_clone.upgrade().unwrap();
+                                        app.set_status(format!("Erreur: extraction auto échouée et JSON invalide: {}", e).into());
+                                        app.set_is_solving(false);
+                                        return;
+                                    }
+                                },
+                                Err(_) => {
+                                    let app = app_weak_clone.upgrade().unwrap();
+                                    app.set_status("Erreur: extraction auto échouée et pas de fichier JSON".into());
+                                    app.set_is_solving(false);
+                                    return;
+                                }
+                            }
                         }
-                    },
-                    Err(_) => {
-                        let app = app_weak_clone.upgrade().unwrap();
-                        app.set_status(format!("Fichier de contraintes non trouvé: {}", constraints_path.display()).into());
-                        app.set_is_solving(false);
-                        return;
                     }
                 };
                 
@@ -248,6 +269,9 @@ pub fn run_gui() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 };
                 
+                // Stocker l'image de résultat pour la sauvegarde
+                *result_image_clone.lock().unwrap() = Some(result_img.clone());
+                
                 // Convertir en Slint Image
                 let rgba_img = result_img.to_rgba8();
                 let (width, height) = rgba_img.dimensions();
@@ -269,6 +293,25 @@ pub fn run_gui() -> Result<(), Box<dyn std::error::Error>> {
                 app.set_status(format!("Résolution terminée ! {} déductions trouvées", deductions.len()).into());
                 app.set_can_save(true);
                 app.set_is_solving(false);
+                
+                // Ajouter à l'historique
+                let solver_mode_name = match solver_mode {
+                    0 => "Basique",
+                    1 => "Avancé",
+                    2 => "Ultime",
+                    _ => "Inconnu",
+                };
+                
+                let entry = crate::gui::history::HistoryEntry {
+                    file_path: file_path.display().to_string(),
+                    timestamp: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+                    solver_mode: solver_mode_name.to_string(),
+                    deductions_count: deductions.len(),
+                };
+                
+                let mut hist = history_clone.lock().unwrap();
+                hist.add_entry(entry);
+                let _ = hist.save();
             });
         });
     }
@@ -276,6 +319,7 @@ pub fn run_gui() -> Result<(), Box<dyn std::error::Error>> {
     // Callback: Sauvegarder résultat
     {
         let app_weak = app.as_weak();
+        let result_image_clone = result_image.clone();
         
         app.on_save_result(move || {
             let app = app_weak.upgrade().unwrap();
@@ -287,8 +331,22 @@ pub fn run_gui() -> Result<(), Box<dyn std::error::Error>> {
                 .set_file_name("result.png")
                 .save_file()
             {
-                // TODO: Sauvegarder l'image de résultat
-                app.set_status(format!("Résultat sauvegardé: {}", path.display()).into());
+                // Récupérer l'image de résultat depuis l'état partagé
+                let result_img_opt = result_image_clone.lock().unwrap().clone();
+                
+                if let Some(result_img) = result_img_opt {
+                    // Sauvegarder l'image
+                    match result_img.save(&path) {
+                        Ok(_) => {
+                            app.set_status(format!("Résultat sauvegardé: {}", path.display()).into());
+                        }
+                        Err(e) => {
+                            app.set_status(format!("Erreur de sauvegarde: {}", e).into());
+                        }
+                    }
+                } else {
+                    app.set_status("Aucun résultat à sauvegarder".into());
+                }
             }
         });
     }
