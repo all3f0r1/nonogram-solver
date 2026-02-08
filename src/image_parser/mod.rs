@@ -1,8 +1,8 @@
 mod grid_detector;
 
-use image::{DynamicImage, GenericImageView, Rgba};
-use crate::grid::{Grid, CellState};
+use crate::grid::{CellState, Grid};
 use grid_detector::GridDetector;
+use image::{DynamicImage, GenericImageView, Rgba};
 
 /// Configuration pour le parseur d'image
 #[derive(Debug, Clone)]
@@ -44,7 +44,12 @@ impl ImageParser {
     }
 
     /// Parse une image et extrait la grille
-    pub fn parse_image(&self, image: &DynamicImage, width: usize, height: usize) -> Result<Grid, String> {
+    pub fn parse_image(
+        &self,
+        image: &DynamicImage,
+        width: usize,
+        height: usize,
+    ) -> Result<Grid, String> {
         let mut grid = Grid::new(width, height);
 
         for row in 0..height {
@@ -58,16 +63,28 @@ impl ImageParser {
     }
 
     /// Détecte l'état d'une case spécifique dans l'image
-    fn detect_cell_state(&self, image: &DynamicImage, row: usize, col: usize) -> Result<CellState, String> {
+    fn detect_cell_state(
+        &self,
+        image: &DynamicImage,
+        row: usize,
+        col: usize,
+    ) -> Result<CellState, String> {
         // Calculer le centre de la case
-        let center_x = self.config.margin_left + (col as u32 * self.config.cell_size) + (self.config.cell_size / 2);
-        let center_y = self.config.margin_top + (row as u32 * self.config.cell_size) + (self.config.cell_size / 2);
+        let center_x = self.config.margin_left
+            + (col as u32 * self.config.cell_size)
+            + (self.config.cell_size / 2);
+        let center_y = self.config.margin_top
+            + (row as u32 * self.config.cell_size)
+            + (self.config.cell_size / 2);
 
         // Vérifier que le point est dans l'image
         if center_x >= image.width() || center_y >= image.height() {
             return Err(format!(
                 "Position ({}, {}) hors de l'image ({}x{})",
-                center_x, center_y, image.width(), image.height()
+                center_x,
+                center_y,
+                image.width(),
+                image.height()
             ));
         }
 
@@ -88,7 +105,7 @@ impl ImageParser {
             if x < image.width() && y < image.height() {
                 let pixel = image.get_pixel(x, y);
                 let state = self.classify_pixel(pixel);
-                
+
                 match state {
                     CellState::Filled => black_count += 1,
                     CellState::Crossed => crossed_count += 1,
@@ -124,8 +141,10 @@ impl ImageParser {
 
         // Détecter une croix (rouge ou bleu, par exemple)
         // Pour simplifier, on considère qu'une case barrée a une couleur non-neutre
-        let color_variance = ((r as i32 - g as i32).abs() + (g as i32 - b as i32).abs() + (r as i32 - b as i32).abs()) as u32;
-        
+        let color_variance = ((r as i32 - g as i32).abs()
+            + (g as i32 - b as i32).abs()
+            + (r as i32 - b as i32).abs()) as u32;
+
         if color_variance > 50 && brightness > self.config.black_threshold as u32 {
             return CellState::Crossed;
         }
@@ -139,21 +158,25 @@ impl ImageParser {
     }
 
     /// Détecte automatiquement les paramètres de la grille
-    pub fn auto_detect_config(image: &DynamicImage, width: usize, height: usize) -> Result<ParserConfig, String> {
+    pub fn auto_detect_config(
+        image: &DynamicImage,
+        width: usize,
+        height: usize,
+    ) -> Result<ParserConfig, String> {
         // Utiliser le détecteur avancé de grille
         match GridDetector::detect_grid_params(image, width, height) {
-            Ok((cell_size, margin_left, margin_top)) => {
-                Ok(ParserConfig {
-                    cell_size,
-                    margin_top,
-                    margin_left,
-                    black_threshold: 128,
-                })
-            }
+            Ok((cell_size, margin_left, margin_top)) => Ok(ParserConfig {
+                cell_size,
+                margin_top,
+                margin_left,
+                black_threshold: 128,
+            }),
             Err(_) => {
                 // Fallback sur l'heuristique simple si la détection échoue
-                eprintln!("Avertissement: Détection avancée échouée, utilisation de l'heuristique simple");
-                
+                eprintln!(
+                    "Avertissement: Détection avancée échouée, utilisation de l'heuristique simple"
+                );
+
                 let img_width = image.width();
                 let img_height = image.height();
 
@@ -189,11 +212,11 @@ mod tests {
     #[test]
     fn test_classify_pixel() {
         let parser = ImageParser::with_default_config();
-        
+
         // Pixel noir
         let black_pixel = Rgba([0, 0, 0, 255]);
         assert_eq!(parser.classify_pixel(black_pixel), CellState::Filled);
-        
+
         // Pixel blanc
         let white_pixel = Rgba([255, 255, 255, 255]);
         assert_eq!(parser.classify_pixel(white_pixel), CellState::Empty);

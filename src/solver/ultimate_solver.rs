@@ -1,7 +1,7 @@
-use crate::grid::{Grid, Constraints};
-use crate::solver::{Deduction, AdvancedSolver, AdvancedSolverConfig};
+use super::backtracking_optimized::{OptimizedBacktrackingConfig, OptimizedBacktrackingSolver};
 use super::parallel_solver::ParallelSolver;
-use super::backtracking_optimized::{OptimizedBacktrackingSolver, OptimizedBacktrackingConfig};
+use crate::grid::{Constraints, Grid};
+use crate::solver::{AdvancedSolver, AdvancedSolverConfig, Deduction};
 
 /// Configuration pour le solveur ultime
 #[derive(Debug, Clone)]
@@ -38,12 +38,30 @@ impl UltimateSolver {
     }
 
     /// Résout la grille avec toutes les techniques disponibles
-    pub fn solve(&mut self, grid: &mut Grid, constraints: &Constraints) -> Result<Vec<Deduction>, String> {
+    pub fn solve(
+        &mut self,
+        grid: &mut Grid,
+        constraints: &Constraints,
+    ) -> Result<Vec<Deduction>, String> {
         if self.config.verbose {
             println!("🌟 Démarrage du solveur ultime");
             println!("   Configuration:");
-            println!("   - Parallélisation: {}", if self.config.use_parallel { "✓" } else { "✗" });
-            println!("   - Backtracking: {}", if self.config.use_backtracking { "✓" } else { "✗" });
+            println!(
+                "   - Parallélisation: {}",
+                if self.config.use_parallel {
+                    "✓"
+                } else {
+                    "✗"
+                }
+            );
+            println!(
+                "   - Backtracking: {}",
+                if self.config.use_backtracking {
+                    "✓"
+                } else {
+                    "✗"
+                }
+            );
         }
 
         let mut all_deductions = Vec::new();
@@ -62,7 +80,7 @@ impl UltimateSolver {
 
         let mut advanced_solver = AdvancedSolver::with_config(advanced_config);
         let advanced_deductions = advanced_solver.solve(grid, constraints)?;
-        
+
         if self.config.verbose {
             println!("   ✓ {} déductions", advanced_deductions.len());
         }
@@ -87,7 +105,10 @@ impl UltimateSolver {
 
             if !parallel_deductions.is_empty() {
                 if self.config.verbose {
-                    println!("   ✓ {} déductions supplémentaires", parallel_deductions.len());
+                    println!(
+                        "   ✓ {} déductions supplémentaires",
+                        parallel_deductions.len()
+                    );
                 }
                 all_deductions.extend(parallel_deductions);
             }
@@ -116,12 +137,16 @@ impl UltimateSolver {
                 verbose: self.config.verbose,
             };
 
-            let mut backtracking_solver = OptimizedBacktrackingSolver::with_config(backtracking_config);
+            let mut backtracking_solver =
+                OptimizedBacktrackingSolver::with_config(backtracking_config);
             let backtracking_deductions = backtracking_solver.solve(grid, constraints)?;
 
             if !backtracking_deductions.is_empty() {
                 if self.config.verbose {
-                    println!("   ✓ {} déductions supplémentaires", backtracking_deductions.len());
+                    println!(
+                        "   ✓ {} déductions supplémentaires",
+                        backtracking_deductions.len()
+                    );
                 }
                 all_deductions.extend(backtracking_deductions);
             }
@@ -136,8 +161,11 @@ impl UltimateSolver {
 
             println!("\n✅ Résolution terminée");
             println!("   Total déductions: {}", all_deductions.len());
-            println!("   Progression: {}% ({}/{} cases)", progress, solved_cells, total_cells);
-            
+            println!(
+                "   Progression: {}% ({}/{} cases)",
+                progress, solved_cells, total_cells
+            );
+
             if empty_cells > 0 {
                 println!("   ⚠️  {} cases non résolues", empty_cells);
             } else {
@@ -158,24 +186,24 @@ mod tests {
     fn test_ultimate_solver_simple() {
         let mut grid = Grid::new(5, 5);
         let mut constraints = Constraints::new(5, 5);
-        
+
         constraints.set_row_constraint(0, vec![2]);
         constraints.set_row_constraint(1, vec![1, 1]);
         constraints.set_row_constraint(2, vec![5]);
         constraints.set_row_constraint(3, vec![1, 1]);
         constraints.set_row_constraint(4, vec![2]);
-        
+
         constraints.set_column_constraint(0, vec![2]);
         constraints.set_column_constraint(1, vec![1, 1]);
         constraints.set_column_constraint(2, vec![5]);
         constraints.set_column_constraint(3, vec![1, 1]);
         constraints.set_column_constraint(4, vec![2]);
-        
+
         let mut solver = UltimateSolver::new();
         let deductions = solver.solve(&mut grid, &constraints).unwrap();
-        
+
         assert!(!deductions.is_empty());
-        
+
         assert_eq!(grid.get(2, 0), Some(CellState::Filled));
         assert_eq!(grid.get(2, 2), Some(CellState::Filled));
         assert_eq!(grid.get(2, 4), Some(CellState::Filled));

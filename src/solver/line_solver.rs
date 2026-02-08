@@ -10,9 +10,13 @@ impl LineSolver {
 
     /// Résout une ligne en utilisant la déduction logique
     /// Retourne les déductions sous forme de (position, état)
-    pub fn solve_line(&self, line: &[CellState], constraint: &[usize]) -> Result<Vec<(usize, CellState)>, String> {
+    pub fn solve_line(
+        &self,
+        line: &[CellState],
+        constraint: &[usize],
+    ) -> Result<Vec<(usize, CellState)>, String> {
         let length = line.len();
-        
+
         // Cas spécial: contrainte vide signifie que toute la ligne est vide
         if constraint.is_empty() {
             let mut deductions = Vec::new();
@@ -41,7 +45,9 @@ impl LineSolver {
 
             // Vérifier si toutes les configurations ont la même valeur à cette position
             let first_value = valid_configs[0][pos];
-            let all_same = valid_configs.iter().all(|config| config[pos] == first_value);
+            let all_same = valid_configs
+                .iter()
+                .all(|config| config[pos] == first_value);
 
             if all_same && first_value != CellState::Empty {
                 deductions.push((pos, first_value));
@@ -52,12 +58,23 @@ impl LineSolver {
     }
 
     /// Génère toutes les configurations valides pour une ligne donnée
-    fn generate_valid_configurations(&self, line: &[CellState], constraint: &[usize]) -> Result<Vec<Vec<CellState>>, String> {
+    fn generate_valid_configurations(
+        &self,
+        line: &[CellState],
+        constraint: &[usize],
+    ) -> Result<Vec<Vec<CellState>>, String> {
         let length = line.len();
         let mut configurations = Vec::new();
 
         // Générer récursivement toutes les configurations possibles
-        self.generate_recursive(line, constraint, 0, 0, vec![CellState::Empty; length], &mut configurations);
+        self.generate_recursive(
+            line,
+            constraint,
+            0,
+            0,
+            vec![CellState::Empty; length],
+            &mut configurations,
+        );
 
         Ok(configurations)
     }
@@ -140,7 +157,14 @@ impl LineSolver {
             };
 
             // Récursion pour le bloc suivant
-            self.generate_recursive(line, constraint, block_index + 1, next_start, new_current, results);
+            self.generate_recursive(
+                line,
+                constraint,
+                block_index + 1,
+                next_start,
+                new_current,
+                results,
+            );
         }
     }
 
@@ -180,7 +204,7 @@ mod tests {
         let line = vec![CellState::Empty; 5];
         let constraint = vec![];
         let deductions = solver.solve_line(&line, &constraint).unwrap();
-        
+
         // Toutes les cases doivent être marquées comme Crossed
         assert_eq!(deductions.len(), 5);
         for (_, state) in deductions {
@@ -194,7 +218,7 @@ mod tests {
         let line = vec![CellState::Empty; 5];
         let constraint = vec![5];
         let deductions = solver.solve_line(&line, &constraint).unwrap();
-        
+
         // Toutes les cases doivent être marquées comme Filled
         assert_eq!(deductions.len(), 5);
         for (_, state) in deductions {
@@ -208,7 +232,7 @@ mod tests {
         let line = vec![CellState::Empty; 7];
         let constraint = vec![5];
         let deductions = solver.solve_line(&line, &constraint).unwrap();
-        
+
         // Les cases du milieu doivent être déduites comme Filled
         // Pour une ligne de 7 avec un bloc de 5, les positions 2, 3, 4 sont forcément noires
         assert!(!deductions.is_empty());
@@ -220,7 +244,7 @@ mod tests {
         let line = vec![CellState::Empty; 7];
         let constraint = vec![2, 2];
         let deductions = solver.solve_line(&line, &constraint).unwrap();
-        
+
         // Peut ou non avoir des déductions selon les positions possibles
         // Ce test vérifie simplement qu'il n'y a pas d'erreur
         assert!(true);
@@ -233,7 +257,7 @@ mod tests {
         line[2] = CellState::Filled;
         let constraint = vec![3];
         let deductions = solver.solve_line(&line, &constraint).unwrap();
-        
+
         // Le bloc de 3 doit inclure la case 2, donc les cases adjacentes peuvent être déduites
         assert!(!deductions.is_empty());
     }

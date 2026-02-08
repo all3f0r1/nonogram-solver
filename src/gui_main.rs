@@ -1,10 +1,10 @@
-mod grid;
-mod solver;
-mod image_parser;
-mod image_generator;
 mod drawing;
 mod edge_detection;
+mod grid;
 mod gui;
+mod image_generator;
+mod image_parser;
+mod solver;
 
 #[cfg(feature = "ocr")]
 mod ocr;

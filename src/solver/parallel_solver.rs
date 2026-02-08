@@ -1,5 +1,5 @@
-use crate::grid::{Grid, CellState, Constraints};
-use crate::solver::{Deduction, line_solver_optimized::OptimizedLineSolver};
+use crate::grid::{CellState, Constraints, Grid};
+use crate::solver::{line_solver_optimized::OptimizedLineSolver, Deduction};
 use rayon::prelude::*;
 use std::sync::{Arc, Mutex};
 
@@ -18,7 +18,11 @@ impl ParallelSolver {
     }
 
     /// Résout la grille en parallèle
-    pub fn solve(&self, grid: &mut Grid, constraints: &Constraints) -> Result<Vec<Deduction>, String> {
+    pub fn solve(
+        &self,
+        grid: &mut Grid,
+        constraints: &Constraints,
+    ) -> Result<Vec<Deduction>, String> {
         let mut all_deductions = Vec::new();
         let mut changed = true;
         let mut iteration = 0;
@@ -62,24 +66,34 @@ impl ParallelSolver {
         }
 
         if self.verbose {
-            println!("   Total: {} déductions en {} itérations", all_deductions.len(), iteration);
+            println!(
+                "   Total: {} déductions en {} itérations",
+                all_deductions.len(),
+                iteration
+            );
         }
 
         Ok(all_deductions)
     }
 
     /// Résout toutes les lignes en parallèle
-    fn solve_rows_parallel(&self, grid: &Grid, constraints: &Constraints) -> Result<Vec<Deduction>, String> {
+    fn solve_rows_parallel(
+        &self,
+        grid: &Grid,
+        constraints: &Constraints,
+    ) -> Result<Vec<Deduction>, String> {
         let deductions = Arc::new(Mutex::new(Vec::new()));
         let height = grid.height();
 
         (0..height).into_par_iter().try_for_each(|row| {
-            let line = grid.get_row(row)
+            let line = grid
+                .get_row(row)
                 .ok_or_else(|| format!("Ligne {} non trouvée", row))?;
-            let constraint = constraints.get_row_constraint(row)
+            let constraint = constraints
+                .get_row_constraint(row)
                 .ok_or_else(|| format!("Contrainte de ligne {} non trouvée", row))?;
 
-            let mut solver = OptimizedLineSolver::new();
+            let solver = OptimizedLineSolver::new();
             let valid_configs = solver.generate_valid_configurations(&line, constraint);
 
             if valid_configs.is_empty() {
@@ -91,8 +105,12 @@ impl ParallelSolver {
                     continue;
                 }
 
-                let all_filled = valid_configs.iter().all(|config| config[col] == CellState::Filled);
-                let all_crossed = valid_configs.iter().all(|config| config[col] == CellState::Crossed);
+                let all_filled = valid_configs
+                    .iter()
+                    .all(|config| config[col] == CellState::Filled);
+                let all_crossed = valid_configs
+                    .iter()
+                    .all(|config| config[col] == CellState::Crossed);
 
                 if all_filled {
                     deductions.lock().unwrap().push(Deduction {
@@ -121,17 +139,23 @@ impl ParallelSolver {
     }
 
     /// Résout toutes les colonnes en parallèle
-    fn solve_columns_parallel(&self, grid: &Grid, constraints: &Constraints) -> Result<Vec<Deduction>, String> {
+    fn solve_columns_parallel(
+        &self,
+        grid: &Grid,
+        constraints: &Constraints,
+    ) -> Result<Vec<Deduction>, String> {
         let deductions = Arc::new(Mutex::new(Vec::new()));
         let width = grid.width();
 
         (0..width).into_par_iter().try_for_each(|col| {
-            let column = grid.get_column(col)
+            let column = grid
+                .get_column(col)
                 .ok_or_else(|| format!("Colonne {} non trouvée", col))?;
-            let constraint = constraints.get_column_constraint(col)
+            let constraint = constraints
+                .get_column_constraint(col)
                 .ok_or_else(|| format!("Contrainte de colonne {} non trouvée", col))?;
 
-            let mut solver = OptimizedLineSolver::new();
+            let solver = OptimizedLineSolver::new();
             let valid_configs = solver.generate_valid_configurations(&column, constraint);
 
             if valid_configs.is_empty() {
@@ -143,8 +167,12 @@ impl ParallelSolver {
                     continue;
                 }
 
-                let all_filled = valid_configs.iter().all(|config| config[row] == CellState::Filled);
-                let all_crossed = valid_configs.iter().all(|config| config[row] == CellState::Crossed);
+                let all_filled = valid_configs
+                    .iter()
+                    .all(|config| config[row] == CellState::Filled);
+                let all_crossed = valid_configs
+                    .iter()
+                    .all(|config| config[row] == CellState::Crossed);
 
                 if all_filled {
                     deductions.lock().unwrap().push(Deduction {
@@ -188,22 +216,22 @@ mod tests {
     fn test_parallel_solver() {
         let mut grid = Grid::new(5, 5);
         let mut constraints = Constraints::new(5, 5);
-        
+
         constraints.set_row_constraint(0, vec![2]);
         constraints.set_row_constraint(1, vec![1, 1]);
         constraints.set_row_constraint(2, vec![5]);
         constraints.set_row_constraint(3, vec![1, 1]);
         constraints.set_row_constraint(4, vec![2]);
-        
+
         constraints.set_column_constraint(0, vec![2]);
         constraints.set_column_constraint(1, vec![1, 1]);
         constraints.set_column_constraint(2, vec![5]);
         constraints.set_column_constraint(3, vec![1, 1]);
         constraints.set_column_constraint(4, vec![2]);
-        
+
         let solver = ParallelSolver::new();
         let deductions = solver.solve(&mut grid, &constraints).unwrap();
-        
+
         assert!(!deductions.is_empty());
     }
 }

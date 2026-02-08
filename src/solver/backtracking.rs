@@ -1,6 +1,6 @@
-use crate::grid::{Grid, CellState, Constraints};
-use crate::solver::{Deduction, AdvancedSolver, AdvancedSolverConfig};
 use super::contradiction_detector::ContradictionDetector;
+use crate::grid::{CellState, Constraints, Grid};
+use crate::solver::{AdvancedSolver, AdvancedSolverConfig, Deduction};
 use std::collections::HashSet;
 
 /// Configuration pour le backtracking
@@ -53,7 +53,11 @@ impl BacktrackingSolver {
     }
 
     /// Résout la grille avec backtracking intelligent
-    pub fn solve(&mut self, grid: &mut Grid, constraints: &Constraints) -> Result<Vec<Deduction>, String> {
+    pub fn solve(
+        &mut self,
+        grid: &mut Grid,
+        constraints: &Constraints,
+    ) -> Result<Vec<Deduction>, String> {
         self.states_explored = 0;
         self.visited_states.clear();
 
@@ -66,7 +70,10 @@ impl BacktrackingSolver {
         let initial_deductions = self.advanced_solver.solve(grid, constraints)?;
 
         if self.config.verbose {
-            println!("   ✓ Solveur avancé: {} déductions", initial_deductions.len());
+            println!(
+                "   ✓ Solveur avancé: {} déductions",
+                initial_deductions.len()
+            );
         }
 
         if grid.count_empty_cells() == 0 {
@@ -77,21 +84,24 @@ impl BacktrackingSolver {
         }
 
         if self.config.verbose {
-            println!("   🔍 Lancement du backtracking ({} cases vides)", grid.count_empty_cells());
+            println!(
+                "   🔍 Lancement du backtracking ({} cases vides)",
+                grid.count_empty_cells()
+            );
         }
 
         let mut all_deductions = initial_deductions.clone();
-        
+
         match self.backtrack(grid, constraints, 0) {
             Ok(additional_deductions) => {
                 all_deductions.extend(additional_deductions);
-                
+
                 if self.config.verbose {
                     println!("   ✅ Backtracking réussi");
                     println!("   - États explorés: {}", self.states_explored);
                     println!("   - Total déductions: {}", all_deductions.len());
                 }
-                
+
                 Ok(all_deductions)
             }
             Err(e) => {
@@ -105,7 +115,12 @@ impl BacktrackingSolver {
     }
 
     /// Fonction récursive de backtracking
-    fn backtrack(&mut self, grid: &mut Grid, constraints: &Constraints, depth: usize) -> Result<Vec<Deduction>, String> {
+    fn backtrack(
+        &mut self,
+        grid: &mut Grid,
+        constraints: &Constraints,
+        depth: usize,
+    ) -> Result<Vec<Deduction>, String> {
         if depth >= self.config.max_depth {
             return Err("Profondeur maximale atteinte".to_string());
         }
@@ -135,41 +150,43 @@ impl BacktrackingSolver {
 
         // Essayer Filled
         let mut test_grid = grid.clone();
-        if test_grid.set(row, col, CellState::Filled).is_ok() {
-            if self.contradiction_detector.is_valid(&test_grid, constraints) {
-                match self.backtrack(&mut test_grid, constraints, depth + 1) {
-                    Ok(mut branch_deductions) => {
-                        grid.set(row, col, CellState::Filled)?;
-                        branch_deductions.push(Deduction {
-                            row,
-                            col,
-                            state: CellState::Filled,
-                        });
-                        branch_deductions.extend(deductions);
-                        return Ok(branch_deductions);
-                    }
-                    Err(_) => {}
-                }
+        if test_grid.set(row, col, CellState::Filled).is_ok()
+            && self
+                .contradiction_detector
+                .is_valid(&test_grid, constraints)
+        {
+            if let Ok(mut branch_deductions) =
+                self.backtrack(&mut test_grid, constraints, depth + 1)
+            {
+                grid.set(row, col, CellState::Filled)?;
+                branch_deductions.push(Deduction {
+                    row,
+                    col,
+                    state: CellState::Filled,
+                });
+                branch_deductions.extend(deductions);
+                return Ok(branch_deductions);
             }
         }
 
         // Essayer Crossed
         let mut test_grid = grid.clone();
-        if test_grid.set(row, col, CellState::Crossed).is_ok() {
-            if self.contradiction_detector.is_valid(&test_grid, constraints) {
-                match self.backtrack(&mut test_grid, constraints, depth + 1) {
-                    Ok(mut branch_deductions) => {
-                        grid.set(row, col, CellState::Crossed)?;
-                        branch_deductions.push(Deduction {
-                            row,
-                            col,
-                            state: CellState::Crossed,
-                        });
-                        branch_deductions.extend(deductions);
-                        return Ok(branch_deductions);
-                    }
-                    Err(_) => {}
-                }
+        if test_grid.set(row, col, CellState::Crossed).is_ok()
+            && self
+                .contradiction_detector
+                .is_valid(&test_grid, constraints)
+        {
+            if let Ok(mut branch_deductions) =
+                self.backtrack(&mut test_grid, constraints, depth + 1)
+            {
+                grid.set(row, col, CellState::Crossed)?;
+                branch_deductions.push(Deduction {
+                    row,
+                    col,
+                    state: CellState::Crossed,
+                });
+                branch_deductions.extend(deductions);
+                return Ok(branch_deductions);
             }
         }
 
@@ -197,7 +214,13 @@ impl BacktrackingSolver {
     }
 
     /// Calcule le score d'une case
-    fn calculate_cell_score(&self, grid: &Grid, constraints: &Constraints, row: usize, col: usize) -> usize {
+    fn calculate_cell_score(
+        &self,
+        grid: &Grid,
+        constraints: &Constraints,
+        row: usize,
+        col: usize,
+    ) -> usize {
         let mut score = 0;
 
         if let Some(line) = grid.get_row(row) {
@@ -245,24 +268,24 @@ mod tests {
     fn test_backtracking_simple() {
         let mut grid = Grid::new(3, 3);
         let mut constraints = Constraints::new(3, 3);
-        
+
         constraints.set_row_constraint(0, vec![1]);
         constraints.set_row_constraint(1, vec![3]);
         constraints.set_row_constraint(2, vec![1]);
-        
+
         constraints.set_column_constraint(0, vec![1]);
         constraints.set_column_constraint(1, vec![3]);
         constraints.set_column_constraint(2, vec![1]);
-        
+
         let config = BacktrackingConfig {
             max_depth: 5,
             max_states: 100,
             verbose: false,
         };
-        
+
         let mut solver = BacktrackingSolver::with_config(config);
         let result = solver.solve(&mut grid, &constraints);
-        
+
         assert!(result.is_ok());
     }
 }

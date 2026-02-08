@@ -15,7 +15,12 @@ pub struct Constraints {
 
 impl Constraints {
     /// Crée de nouvelles contraintes
-    pub fn new(width: usize, height: usize, rows: Vec<Vec<usize>>, columns: Vec<Vec<usize>>) -> Result<Self, String> {
+    pub fn new(
+        width: usize,
+        height: usize,
+        rows: Vec<Vec<usize>>,
+        columns: Vec<Vec<usize>>,
+    ) -> Result<Self, String> {
         if rows.len() != height {
             return Err(format!(
                 "Le nombre de contraintes de lignes ({}) ne correspond pas à la hauteur ({})",
@@ -66,7 +71,7 @@ impl Constraints {
             .map_err(|e| format!("Erreur lors de la lecture du fichier: {}", e))?;
         let constraints: Constraints = serde_json::from_str(&content)
             .map_err(|e| format!("Erreur lors du parsing JSON: {}", e))?;
-        
+
         // Valider les contraintes
         Self::new(
             constraints.width,

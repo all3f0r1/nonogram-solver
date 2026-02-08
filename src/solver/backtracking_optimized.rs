@@ -1,7 +1,7 @@
-use crate::grid::{Grid, CellState, Constraints};
-use crate::solver::{Deduction, AdvancedSolver, AdvancedSolverConfig};
 use super::contradiction_detector::ContradictionDetector;
-use std::collections::{HashSet, HashMap};
+use crate::grid::{CellState, Constraints, Grid};
+use crate::solver::{AdvancedSolver, AdvancedSolverConfig, Deduction};
+use std::collections::{HashMap, HashSet};
 
 /// Configuration pour le backtracking optimisé
 #[derive(Debug, Clone)]
@@ -17,8 +17,8 @@ pub struct OptimizedBacktrackingConfig {
 impl Default for OptimizedBacktrackingConfig {
     fn default() -> Self {
         Self {
-            max_depth: 50,  // Augmenté de 10 à 50
-            max_states: 100000,  // Augmenté de 10,000 à 100,000
+            max_depth: 50,      // Augmenté de 10 à 50
+            max_states: 100000, // Augmenté de 10,000 à 100,000
             use_constraint_propagation: true,
             use_naked_singles: true,
             use_hidden_singles: true,
@@ -61,7 +61,11 @@ impl OptimizedBacktrackingSolver {
     }
 
     /// Résout la grille avec backtracking optimisé
-    pub fn solve(&mut self, grid: &mut Grid, constraints: &Constraints) -> Result<Vec<Deduction>, String> {
+    pub fn solve(
+        &mut self,
+        grid: &mut Grid,
+        constraints: &Constraints,
+    ) -> Result<Vec<Deduction>, String> {
         self.states_explored = 0;
         self.visited_states.clear();
         self.deduction_cache.clear();
@@ -70,14 +74,24 @@ impl OptimizedBacktrackingSolver {
             println!("🔄 Démarrage du backtracking optimisé");
             println!("   - Profondeur max: {}", self.config.max_depth);
             println!("   - États max: {}", self.config.max_states);
-            println!("   - Propagation de contraintes: {}", if self.config.use_constraint_propagation { "✓" } else { "✗" });
+            println!(
+                "   - Propagation de contraintes: {}",
+                if self.config.use_constraint_propagation {
+                    "✓"
+                } else {
+                    "✗"
+                }
+            );
         }
 
         // Phase 1: Appliquer le solveur avancé
         let initial_deductions = self.advanced_solver.solve(grid, constraints)?;
 
         if self.config.verbose {
-            println!("   ✓ Solveur avancé: {} déductions", initial_deductions.len());
+            println!(
+                "   ✓ Solveur avancé: {} déductions",
+                initial_deductions.len()
+            );
         }
 
         if grid.count_empty_cells() == 0 {
@@ -104,7 +118,10 @@ impl OptimizedBacktrackingSolver {
         }
 
         if self.config.verbose {
-            println!("   🔍 Lancement du backtracking ({} cases vides)", grid.count_empty_cells());
+            println!(
+                "   🔍 Lancement du backtracking ({} cases vides)",
+                grid.count_empty_cells()
+            );
         }
 
         // Phase 3: Backtracking avec propagation de contraintes
@@ -114,7 +131,7 @@ impl OptimizedBacktrackingSolver {
                     println!("   ✅ Backtracking réussi");
                     println!("   - États explorés: {}", self.states_explored);
                 }
-                
+
                 self.collect_all_deductions(grid)
             }
             Err(e) => {
@@ -122,7 +139,7 @@ impl OptimizedBacktrackingSolver {
                     println!("   ⚠️  Backtracking incomplet: {}", e);
                     println!("   - États explorés: {}", self.states_explored);
                 }
-                
+
                 self.collect_all_deductions(grid)
             }
         }
@@ -131,7 +148,7 @@ impl OptimizedBacktrackingSolver {
     /// Collecte toutes les déductions de la grille
     fn collect_all_deductions(&self, grid: &Grid) -> Result<Vec<Deduction>, String> {
         let mut deductions = Vec::new();
-        
+
         for row in 0..grid.height() {
             for col in 0..grid.width() {
                 if let Some(state) = grid.get(row, col) {
@@ -141,33 +158,41 @@ impl OptimizedBacktrackingSolver {
                 }
             }
         }
-        
+
         Ok(deductions)
     }
 
     /// Applique la technique des "naked singles"
     /// Une case est un naked single si elle ne peut avoir qu'une seule valeur
-    fn apply_naked_singles(&mut self, grid: &mut Grid, constraints: &Constraints) -> Result<(), String> {
+    fn apply_naked_singles(
+        &mut self,
+        grid: &mut Grid,
+        constraints: &Constraints,
+    ) -> Result<(), String> {
         let mut changed = true;
-        
+
         while changed {
             changed = false;
-            
+
             for row in 0..grid.height() {
                 for col in 0..grid.width() {
                     if grid.get(row, col) == Some(CellState::Empty) {
                         // Tester si Filled est la seule option
                         let mut test_grid = grid.clone();
                         test_grid.set(row, col, CellState::Filled)?;
-                        
-                        let filled_valid = !self.contradiction_detector.has_contradiction(&test_grid, constraints);
-                        
+
+                        let filled_valid = !self
+                            .contradiction_detector
+                            .has_contradiction(&test_grid, constraints);
+
                         // Tester si Crossed est la seule option
                         let mut test_grid = grid.clone();
                         test_grid.set(row, col, CellState::Crossed)?;
-                        
-                        let crossed_valid = !self.contradiction_detector.has_contradiction(&test_grid, constraints);
-                        
+
+                        let crossed_valid = !self
+                            .contradiction_detector
+                            .has_contradiction(&test_grid, constraints);
+
                         // Si une seule option est valide, l'appliquer
                         if filled_valid && !crossed_valid {
                             grid.set(row, col, CellState::Filled)?;
@@ -180,29 +205,34 @@ impl OptimizedBacktrackingSolver {
                 }
             }
         }
-        
+
         Ok(())
     }
 
     /// Applique la technique des "hidden singles"
     /// Une valeur est un hidden single si elle ne peut aller que dans une seule case d'une ligne/colonne
-    fn apply_hidden_singles(&mut self, grid: &mut Grid, constraints: &Constraints) -> Result<(), String> {
+    fn apply_hidden_singles(
+        &mut self,
+        grid: &mut Grid,
+        constraints: &Constraints,
+    ) -> Result<(), String> {
         // Pour chaque ligne
         for row in 0..grid.height() {
-            let row_constraint = constraints.get_row_constraint(row)
+            let row_constraint = constraints
+                .get_row_constraint(row)
                 .ok_or_else(|| format!("Contrainte de ligne {} non trouvée", row))?;
-            
+
             // Trouver les positions possibles pour chaque bloc
-            for (block_idx, &block_size) in row_constraint.iter().enumerate() {
+            for (_block_idx, &block_size) in row_constraint.iter().enumerate() {
                 let mut possible_positions = Vec::new();
-                
+
                 for col in 0..grid.width() {
                     // Vérifier si le bloc peut commencer à cette position
                     if self.can_place_block(grid, row, col, block_size, true) {
                         possible_positions.push(col);
                     }
                 }
-                
+
                 // Si une seule position est possible, placer le bloc
                 if possible_positions.len() == 1 {
                     let col = possible_positions[0];
@@ -214,21 +244,22 @@ impl OptimizedBacktrackingSolver {
                 }
             }
         }
-        
+
         // Pour chaque colonne
         for col in 0..grid.width() {
-            let col_constraint = constraints.get_column_constraint(col)
+            let col_constraint = constraints
+                .get_column_constraint(col)
                 .ok_or_else(|| format!("Contrainte de colonne {} non trouvée", col))?;
-            
-            for (block_idx, &block_size) in col_constraint.iter().enumerate() {
+
+            for (_block_idx, &block_size) in col_constraint.iter().enumerate() {
                 let mut possible_positions = Vec::new();
-                
+
                 for row in 0..grid.height() {
                     if self.can_place_block(grid, row, col, block_size, false) {
                         possible_positions.push(row);
                     }
                 }
-                
+
                 if possible_positions.len() == 1 {
                     let row = possible_positions[0];
                     for i in 0..block_size {
@@ -239,47 +270,57 @@ impl OptimizedBacktrackingSolver {
                 }
             }
         }
-        
+
         Ok(())
     }
 
     /// Vérifie si un bloc peut être placé à une position donnée
-    fn can_place_block(&self, grid: &Grid, start_row: usize, start_col: usize, size: usize, horizontal: bool) -> bool {
+    fn can_place_block(
+        &self,
+        grid: &Grid,
+        start_row: usize,
+        start_col: usize,
+        size: usize,
+        horizontal: bool,
+    ) -> bool {
         if horizontal {
             // Vérifier si le bloc dépasse la grille
             if start_col + size > grid.width() {
                 return false;
             }
-            
+
             // Vérifier si toutes les cases sont vides ou remplies
             for i in 0..size {
-                match grid.get(start_row, start_col + i) {
-                    Some(CellState::Crossed) => return false,
-                    _ => {}
+                if let Some(CellState::Crossed) = grid.get(start_row, start_col + i) {
+                    return false;
                 }
             }
-            
+
             true
         } else {
             // Vérifier si le bloc dépasse la grille
             if start_row + size > grid.height() {
                 return false;
             }
-            
+
             // Vérifier si toutes les cases sont vides ou remplies
             for i in 0..size {
-                match grid.get(start_row + i, start_col) {
-                    Some(CellState::Crossed) => return false,
-                    _ => {}
+                if let Some(CellState::Crossed) = grid.get(start_row + i, start_col) {
+                    return false;
                 }
             }
-            
+
             true
         }
     }
 
     /// Backtracking récursif avec optimisations
-    fn backtrack(&mut self, grid: &mut Grid, constraints: &Constraints, depth: usize) -> Result<(), String> {
+    fn backtrack(
+        &mut self,
+        grid: &mut Grid,
+        constraints: &Constraints,
+        depth: usize,
+    ) -> Result<(), String> {
         // Vérifier les limites
         if depth >= self.config.max_depth {
             return Err("Profondeur maximale atteinte".to_string());
@@ -305,8 +346,8 @@ impl OptimizedBacktrackingSolver {
 
         // Propagation de contraintes après chaque choix
         if self.config.use_constraint_propagation {
-            let deductions = self.advanced_solver.solve(grid, constraints)?;
-            
+            let _deductions = self.advanced_solver.solve(grid, constraints)?;
+
             if grid.count_empty_cells() == 0 {
                 return Ok(());
             }
@@ -321,7 +362,10 @@ impl OptimizedBacktrackingSolver {
             test_grid.set(best_row, best_col, state)?;
 
             // Vérifier rapidement les contradictions
-            if !self.contradiction_detector.has_contradiction(&test_grid, constraints) {
+            if !self
+                .contradiction_detector
+                .has_contradiction(&test_grid, constraints)
+            {
                 // Appliquer le choix
                 grid.set(best_row, best_col, state)?;
 
@@ -341,7 +385,11 @@ impl OptimizedBacktrackingSolver {
     }
 
     /// Heuristique MRV améliorée avec analyse de contraintes
-    fn choose_best_cell_mrv_plus(&self, grid: &Grid, constraints: &Constraints) -> Result<(usize, usize), String> {
+    fn choose_best_cell_mrv_plus(
+        &self,
+        grid: &Grid,
+        constraints: &Constraints,
+    ) -> Result<(usize, usize), String> {
         let mut best_score = 0;
         let mut best_cell = None;
 
@@ -349,7 +397,7 @@ impl OptimizedBacktrackingSolver {
             for col in 0..grid.width() {
                 if grid.get(row, col) == Some(CellState::Empty) {
                     let score = self.calculate_cell_score(grid, constraints, row, col);
-                    
+
                     if score > best_score {
                         best_score = score;
                         best_cell = Some((row, col));
@@ -362,7 +410,13 @@ impl OptimizedBacktrackingSolver {
     }
 
     /// Calcule le score d'une case pour l'heuristique MRV+
-    fn calculate_cell_score(&self, grid: &Grid, constraints: &Constraints, row: usize, col: usize) -> usize {
+    fn calculate_cell_score(
+        &self,
+        grid: &Grid,
+        constraints: &Constraints,
+        row: usize,
+        col: usize,
+    ) -> usize {
         let mut score = 0;
 
         // Compter les cases remplies dans la ligne
@@ -404,7 +458,7 @@ impl OptimizedBacktrackingSolver {
     /// Convertit la grille en string pour le cache
     fn grid_to_string(&self, grid: &Grid) -> String {
         let mut result = String::new();
-        
+
         for row in 0..grid.height() {
             for col in 0..grid.width() {
                 match grid.get(row, col) {
@@ -415,7 +469,7 @@ impl OptimizedBacktrackingSolver {
                 }
             }
         }
-        
+
         result
     }
 }
@@ -442,10 +496,10 @@ mod tests {
         let rows = vec![vec![5], vec![1], vec![1], vec![1], vec![5]];
         let columns = vec![vec![2], vec![1, 1], vec![1, 1], vec![1, 1], vec![2]];
         let constraints = Constraints::new(5, 5, rows, columns).unwrap();
-        
+
         let mut solver = OptimizedBacktrackingSolver::new();
         let result = solver.solve(&mut grid, &constraints);
-        
+
         assert!(result.is_ok());
     }
 }

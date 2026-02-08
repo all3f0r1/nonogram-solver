@@ -15,9 +15,13 @@ impl OptimizedLineSolver {
     }
 
     /// Résout une ligne en utilisant la déduction logique avec optimisations
-    pub fn solve_line(&mut self, line: &[CellState], constraint: &[usize]) -> Result<Vec<(usize, CellState)>, String> {
+    pub fn solve_line(
+        &mut self,
+        line: &[CellState],
+        constraint: &[usize],
+    ) -> Result<Vec<(usize, CellState)>, String> {
         let length = line.len();
-        
+
         // Cas spécial: contrainte vide
         if constraint.is_empty() {
             let mut deductions = Vec::new();
@@ -76,12 +80,21 @@ impl OptimizedLineSolver {
     }
 
     /// Génère les configurations valides (interface publique)
-    pub fn generate_valid_configurations(&self, line: &[CellState], constraint: &[usize]) -> Vec<Vec<CellState>> {
-        self.generate_valid_configurations_optimized(line, constraint).unwrap_or_default()
+    pub fn generate_valid_configurations(
+        &self,
+        line: &[CellState],
+        constraint: &[usize],
+    ) -> Vec<Vec<CellState>> {
+        self.generate_valid_configurations_optimized(line, constraint)
+            .unwrap_or_default()
     }
 
     /// Génère les configurations valides avec optimisations
-    fn generate_valid_configurations_optimized(&self, line: &[CellState], constraint: &[usize]) -> Result<Vec<Vec<CellState>>, String> {
+    fn generate_valid_configurations_optimized(
+        &self,
+        line: &[CellState],
+        constraint: &[usize],
+    ) -> Result<Vec<Vec<CellState>>, String> {
         let length = line.len();
         let mut configurations = Vec::new();
 
@@ -141,11 +154,11 @@ impl OptimizedLineSolver {
 
         // Essayer de placer le bloc à différentes positions
         let max_pos = length.saturating_sub(block_size + min_space_needed);
-        
+
         for pos in start_pos..=max_pos {
             // Élagage précoce: vérifier la compatibilité avant de continuer
             let mut can_place = true;
-            
+
             // Vérifier que les cases avant peuvent être Crossed
             for i in start_pos..pos {
                 if line[i] == CellState::Filled {
@@ -153,7 +166,7 @@ impl OptimizedLineSolver {
                     break;
                 }
             }
-            
+
             if !can_place {
                 continue;
             }
@@ -171,10 +184,11 @@ impl OptimizedLineSolver {
             }
 
             // Vérifier l'espace après le bloc
-            if block_index + 1 < constraint.len() && pos + block_size < length {
-                if line[pos + block_size] == CellState::Filled {
-                    continue;
-                }
+            if block_index + 1 < constraint.len()
+                && pos + block_size < length
+                && line[pos + block_size] == CellState::Filled
+            {
+                continue;
             }
 
             // Placer le bloc
@@ -214,13 +228,14 @@ impl OptimizedLineSolver {
 
     /// Vérifie la compatibilité
     fn is_compatible(&self, config: &[CellState], line: &[CellState]) -> bool {
-        config.iter().zip(line.iter()).all(|(&config_cell, &line_cell)| {
-            match line_cell {
+        config
+            .iter()
+            .zip(line.iter())
+            .all(|(&config_cell, &line_cell)| match line_cell {
                 CellState::Empty => true,
                 CellState::Filled => config_cell == CellState::Filled,
                 CellState::Crossed => config_cell == CellState::Crossed,
-            }
-        })
+            })
     }
 
     /// Calcule la longueur minimale nécessaire
@@ -253,7 +268,7 @@ mod tests {
         let line = vec![CellState::Empty; 5];
         let constraint = vec![5];
         let deductions = solver.solve_line(&line, &constraint).unwrap();
-        
+
         assert_eq!(deductions.len(), 5);
         for (_, state) in deductions {
             assert_eq!(state, CellState::Filled);
@@ -265,15 +280,15 @@ mod tests {
         let mut solver = OptimizedLineSolver::new();
         let line = vec![CellState::Empty; 7];
         let constraint = vec![3, 2];
-        
+
         // Première résolution
         let _ = solver.solve_line(&line, &constraint).unwrap();
         assert_eq!(solver.cache.len(), 1);
-        
+
         // Deuxième résolution (devrait utiliser le cache)
         let _ = solver.solve_line(&line, &constraint).unwrap();
         assert_eq!(solver.cache.len(), 1);
-        
+
         // Vider le cache
         solver.clear_cache();
         assert_eq!(solver.cache.len(), 0);

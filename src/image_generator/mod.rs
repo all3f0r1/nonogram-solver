@@ -1,7 +1,7 @@
-use image::{DynamicImage, Rgba, RgbaImage, Rgb};
-use crate::drawing::{draw_filled_circle_mut, draw_cross_mut};
-use crate::solver::Deduction;
+use crate::drawing::{draw_cross_mut, draw_filled_circle_mut};
 use crate::grid::CellState;
+use crate::solver::Deduction;
+use image::{DynamicImage, Rgb, Rgba, RgbaImage};
 
 /// Configuration pour le générateur d'image
 #[derive(Debug, Clone)]
@@ -65,14 +65,21 @@ impl ImageGenerator {
     /// Marque une déduction sur l'image
     fn mark_deduction(&self, image: &mut RgbaImage, deduction: &Deduction) -> Result<(), String> {
         // Calculer le centre de la case
-        let center_x = self.config.margin_left + (deduction.col as u32 * self.config.cell_size) + (self.config.cell_size / 2);
-        let center_y = self.config.margin_top + (deduction.row as u32 * self.config.cell_size) + (self.config.cell_size / 2);
+        let center_x = self.config.margin_left
+            + (deduction.col as u32 * self.config.cell_size)
+            + (self.config.cell_size / 2);
+        let center_y = self.config.margin_top
+            + (deduction.row as u32 * self.config.cell_size)
+            + (self.config.cell_size / 2);
 
         // Vérifier que le point est dans l'image
         if center_x >= image.width() || center_y >= image.height() {
             return Err(format!(
                 "Position ({}, {}) hors de l'image ({}x{})",
-                center_x, center_y, image.width(), image.height()
+                center_x,
+                center_y,
+                image.width(),
+                image.height()
             ));
         }
 
@@ -98,80 +105,129 @@ impl ImageGenerator {
     }
 
     /// Dessine un cercle rempli sur une image RGBA
-    fn draw_filled_circle_rgba(&self, image: &mut RgbaImage, center_x: i32, center_y: i32, radius: i32) -> Result<(), String> {
+    fn draw_filled_circle_rgba(
+        &self,
+        image: &mut RgbaImage,
+        center_x: i32,
+        center_y: i32,
+        radius: i32,
+    ) -> Result<(), String> {
         // Créer une image RGB temporaire
         let mut rgb_image = DynamicImage::ImageRgba8(image.clone()).to_rgb8();
-        let rgb_color = Rgb([self.config.highlight_color[0], self.config.highlight_color[1], self.config.highlight_color[2]]);
-        
+        let rgb_color = Rgb([
+            self.config.highlight_color[0],
+            self.config.highlight_color[1],
+            self.config.highlight_color[2],
+        ]);
+
         // Dessiner le cercle sur l'image RGB
         draw_filled_circle_mut(&mut rgb_image, (center_x, center_y), radius, rgb_color);
-        
+
         // Copier le résultat avec alpha
         for y in (center_y - radius).max(0)..(center_y + radius + 1).min(image.height() as i32) {
             for x in (center_x - radius).max(0)..(center_x + radius + 1).min(image.width() as i32) {
                 let rgb_pixel = rgb_image.get_pixel(x as u32, y as u32);
                 let original_pixel = image.get_pixel(x as u32, y as u32);
-                
+
                 // Si le pixel a été modifié par le cercle, appliquer la couleur avec alpha
-                if rgb_pixel[0] == rgb_color[0] && rgb_pixel[1] == rgb_color[1] && rgb_pixel[2] == rgb_color[2] {
+                if rgb_pixel[0] == rgb_color[0]
+                    && rgb_pixel[1] == rgb_color[1]
+                    && rgb_pixel[2] == rgb_color[2]
+                {
                     // Blending alpha
                     let alpha = self.config.highlight_color[3] as f32 / 255.0;
                     let blended = Rgba([
-                        ((rgb_color[0] as f32 * alpha) + (original_pixel[0] as f32 * (1.0 - alpha))) as u8,
-                        ((rgb_color[1] as f32 * alpha) + (original_pixel[1] as f32 * (1.0 - alpha))) as u8,
-                        ((rgb_color[2] as f32 * alpha) + (original_pixel[2] as f32 * (1.0 - alpha))) as u8,
+                        ((rgb_color[0] as f32 * alpha) + (original_pixel[0] as f32 * (1.0 - alpha)))
+                            as u8,
+                        ((rgb_color[1] as f32 * alpha) + (original_pixel[1] as f32 * (1.0 - alpha)))
+                            as u8,
+                        ((rgb_color[2] as f32 * alpha) + (original_pixel[2] as f32 * (1.0 - alpha)))
+                            as u8,
                         255,
                     ]);
                     image.put_pixel(x as u32, y as u32, blended);
                 }
             }
         }
-        
+
         Ok(())
     }
 
     /// Dessine une croix sur une image RGBA
-    fn draw_cross_rgba(&self, image: &mut RgbaImage, center_x: i32, center_y: i32, size: i32) -> Result<(), String> {
+    fn draw_cross_rgba(
+        &self,
+        image: &mut RgbaImage,
+        center_x: i32,
+        center_y: i32,
+        size: i32,
+    ) -> Result<(), String> {
         // Créer une image RGB temporaire
         let mut rgb_image = DynamicImage::ImageRgba8(image.clone()).to_rgb8();
-        let rgb_color = Rgb([self.config.highlight_color[0], self.config.highlight_color[1], self.config.highlight_color[2]]);
-        
+        let rgb_color = Rgb([
+            self.config.highlight_color[0],
+            self.config.highlight_color[1],
+            self.config.highlight_color[2],
+        ]);
+
         // Dessiner la croix sur l'image RGB
-        draw_cross_mut(&mut rgb_image, (center_x, center_y), (size * 2) as u32, rgb_color);
-        
+        draw_cross_mut(
+            &mut rgb_image,
+            (center_x, center_y),
+            (size * 2) as u32,
+            rgb_color,
+        );
+
         // Épaissir la croix en dessinant plusieurs fois
         for offset in -1..=1 {
-            draw_cross_mut(&mut rgb_image, (center_x + offset, center_y), (size * 2) as u32, rgb_color);
-            draw_cross_mut(&mut rgb_image, (center_x, center_y + offset), (size * 2) as u32, rgb_color);
+            draw_cross_mut(
+                &mut rgb_image,
+                (center_x + offset, center_y),
+                (size * 2) as u32,
+                rgb_color,
+            );
+            draw_cross_mut(
+                &mut rgb_image,
+                (center_x, center_y + offset),
+                (size * 2) as u32,
+                rgb_color,
+            );
         }
-        
+
         // Copier le résultat avec alpha
         for y in (center_y - size).max(0)..(center_y + size + 1).min(image.height() as i32) {
             for x in (center_x - size).max(0)..(center_x + size + 1).min(image.width() as i32) {
                 let rgb_pixel = rgb_image.get_pixel(x as u32, y as u32);
                 let original_pixel = image.get_pixel(x as u32, y as u32);
-                
+
                 // Si le pixel a été modifié par la croix, appliquer la couleur avec alpha
-                if rgb_pixel[0] == rgb_color[0] && rgb_pixel[1] == rgb_color[1] && rgb_pixel[2] == rgb_color[2] {
+                if rgb_pixel[0] == rgb_color[0]
+                    && rgb_pixel[1] == rgb_color[1]
+                    && rgb_pixel[2] == rgb_color[2]
+                {
                     // Blending alpha
                     let alpha = self.config.highlight_color[3] as f32 / 255.0;
                     let blended = Rgba([
-                        ((rgb_color[0] as f32 * alpha) + (original_pixel[0] as f32 * (1.0 - alpha))) as u8,
-                        ((rgb_color[1] as f32 * alpha) + (original_pixel[1] as f32 * (1.0 - alpha))) as u8,
-                        ((rgb_color[2] as f32 * alpha) + (original_pixel[2] as f32 * (1.0 - alpha))) as u8,
+                        ((rgb_color[0] as f32 * alpha) + (original_pixel[0] as f32 * (1.0 - alpha)))
+                            as u8,
+                        ((rgb_color[1] as f32 * alpha) + (original_pixel[1] as f32 * (1.0 - alpha)))
+                            as u8,
+                        ((rgb_color[2] as f32 * alpha) + (original_pixel[2] as f32 * (1.0 - alpha)))
+                            as u8,
                         255,
                     ]);
                     image.put_pixel(x as u32, y as u32, blended);
                 }
             }
         }
-        
+
         Ok(())
     }
 
     /// Sauvegarde l'image dans un fichier
     pub fn save_image(image: &DynamicImage, path: &str) -> Result<(), String> {
-        image.save(path).map_err(|e| format!("Erreur lors de la sauvegarde de l'image: {}", e))
+        image
+            .save(path)
+            .map_err(|e| format!("Erreur lors de la sauvegarde de l'image: {}", e))
     }
 
     /// Crée une configuration à partir d'une configuration de parseur

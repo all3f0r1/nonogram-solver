@@ -13,12 +13,36 @@ pub enum CellState {
     Crossed,
 }
 
+impl std::fmt::Display for CellState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CellState::Empty => write!(f, "·"),
+            CellState::Filled => write!(f, "█"),
+            CellState::Crossed => write!(f, "✕"),
+        }
+    }
+}
+
 /// Représente la grille du nonogramme
 #[derive(Debug, Clone)]
 pub struct Grid {
     width: usize,
     height: usize,
     cells: Vec<Vec<CellState>>,
+}
+
+impl std::fmt::Display for Grid {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for row in 0..self.height {
+            for col in 0..self.width {
+                if let Some(cell) = self.get(row, col) {
+                    write!(f, "{} ", cell)?;
+                }
+            }
+            writeln!(f)?;
+        }
+        Ok(())
+    }
 }
 
 impl Grid {

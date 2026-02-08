@@ -1,4 +1,4 @@
-use crate::grid::{Grid, CellState, Constraints};
+use crate::grid::{CellState, Constraints, Grid};
 use crate::solver::NonogramSolver;
 
 /// Détecteur de contradictions pour nonogrammes
@@ -36,9 +36,16 @@ impl ContradictionDetector {
     }
 
     /// Test hypothétique: vérifie si placer un état dans une case crée une contradiction
-    pub fn test_hypothesis(&mut self, grid: &Grid, constraints: &Constraints, row: usize, col: usize, state: CellState) -> bool {
+    pub fn test_hypothesis(
+        &mut self,
+        grid: &Grid,
+        constraints: &Constraints,
+        row: usize,
+        col: usize,
+        state: CellState,
+    ) -> bool {
         let mut test_grid = grid.clone();
-        
+
         if test_grid.set(row, col, state).is_err() {
             return false;
         }
@@ -84,7 +91,7 @@ impl ContradictionDetector {
     /// Vérifie les contradictions de base pour une ligne
     fn check_line_basic(&self, line: &[CellState], constraint: &[usize]) -> bool {
         let filled_blocks = self.count_filled_blocks(line);
-        
+
         if filled_blocks.len() > constraint.len() {
             return false;
         }
@@ -97,7 +104,7 @@ impl ContradictionDetector {
 
         let filled_count = line.iter().filter(|&&c| c == CellState::Filled).count();
         let required_count: usize = constraint.iter().sum();
-        
+
         if filled_count > required_count {
             return false;
         }
@@ -154,11 +161,11 @@ impl ContradictionDetector {
     /// Vérifie les blocs impossibles pour une ligne
     fn check_line_impossible_blocks(&self, line: &[CellState], constraint: &[usize]) -> bool {
         if constraint.is_empty() {
-            return !line.iter().any(|&c| c == CellState::Filled);
+            return !line.contains(&CellState::Filled);
         }
 
         let segments = self.find_available_segments(line);
-        
+
         for &block_size in constraint.iter() {
             let can_fit = segments.iter().any(|(_, size)| *size >= block_size);
             if !can_fit {
@@ -172,11 +179,8 @@ impl ContradictionDetector {
     /// Vérifie les contradictions par déduction
     fn check_deduction_contradictions(&mut self, grid: &Grid, constraints: &Constraints) -> bool {
         let mut test_grid = grid.clone();
-        
-        match self.solver.solve(&mut test_grid, constraints) {
-            Ok(_) => true,
-            Err(_) => false,
-        }
+
+        self.solver.solve(&mut test_grid, constraints).is_ok()
     }
 
     /// Compte les blocs de cases remplies
@@ -257,10 +261,10 @@ mod tests {
         let mut grid = Grid::new(5, 1);
         let mut constraints = Constraints::new(5, 1);
         constraints.set_row_constraint(0, vec![2]);
-        
+
         grid.set(0, 1, CellState::Filled).unwrap();
         grid.set(0, 2, CellState::Filled).unwrap();
-        
+
         let mut detector = ContradictionDetector::new();
         assert!(detector.is_valid(&grid, &constraints));
     }
@@ -270,11 +274,11 @@ mod tests {
         let mut grid = Grid::new(5, 1);
         let mut constraints = Constraints::new(5, 1);
         constraints.set_row_constraint(0, vec![1]);
-        
+
         grid.set(0, 0, CellState::Filled).unwrap();
         grid.set(0, 2, CellState::Filled).unwrap();
         grid.set(0, 1, CellState::Crossed).unwrap();
-        
+
         let mut detector = ContradictionDetector::new();
         assert!(!detector.is_valid(&grid, &constraints));
     }
@@ -284,7 +288,7 @@ mod tests {
         let grid = Grid::new(5, 1);
         let mut constraints = Constraints::new(5, 1);
         constraints.set_row_constraint(0, vec![2]);
-        
+
         let mut detector = ContradictionDetector::new();
         assert!(detector.test_hypothesis(&grid, &constraints, 0, 1, CellState::Filled));
     }

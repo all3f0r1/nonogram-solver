@@ -1,7 +1,7 @@
-use crate::grid::{Grid, Constraints};
-use crate::solver::{Deduction, NonogramSolver};
-use super::cross_analysis::CrossAnalyzer;
 use super::advanced_heuristics::AdvancedHeuristics;
+use super::cross_analysis::CrossAnalyzer;
+use crate::grid::{Constraints, Grid};
+use crate::solver::{Deduction, NonogramSolver};
 
 /// Configuration pour le solveur avancé
 #[derive(Debug, Clone)]
@@ -49,15 +49,33 @@ impl AdvancedSolver {
         }
     }
 
-    pub fn solve(&mut self, grid: &mut Grid, constraints: &Constraints) -> Result<Vec<Deduction>, String> {
+    pub fn solve(
+        &mut self,
+        grid: &mut Grid,
+        constraints: &Constraints,
+    ) -> Result<Vec<Deduction>, String> {
         let mut all_deductions = Vec::new();
         let mut iteration = 0;
         let mut changed = true;
 
         if self.config.verbose {
             println!("🚀 Démarrage du solveur avancé");
-            println!("   - Analyse croisée: {}", if self.config.use_cross_analysis { "✓" } else { "✗" });
-            println!("   - Heuristiques avancées: {}", if self.config.use_advanced_heuristics { "✓" } else { "✗" });
+            println!(
+                "   - Analyse croisée: {}",
+                if self.config.use_cross_analysis {
+                    "✓"
+                } else {
+                    "✗"
+                }
+            );
+            println!(
+                "   - Heuristiques avancées: {}",
+                if self.config.use_advanced_heuristics {
+                    "✓"
+                } else {
+                    "✗"
+                }
+            );
         }
 
         while changed && iteration < self.config.max_iterations {
@@ -88,10 +106,11 @@ impl AdvancedSolver {
                     println!("   Phase 2: Analyse croisée...");
                 }
                 let cross_deductions = self.cross_analyzer.analyze(grid, constraints)?;
-                let new_deductions: Vec<_> = cross_deductions.into_iter()
+                let new_deductions: Vec<_> = cross_deductions
+                    .into_iter()
                     .filter(|d| grid.get(d.row, d.col) == Some(crate::grid::CellState::Empty))
                     .collect();
-                
+
                 if !new_deductions.is_empty() {
                     if self.config.verbose {
                         println!("      → {} déductions", new_deductions.len());
@@ -108,10 +127,11 @@ impl AdvancedSolver {
                     println!("   Phase 3: Heuristiques avancées...");
                 }
                 let heuristic_deductions = self.heuristics.apply(grid, constraints)?;
-                let new_deductions: Vec<_> = heuristic_deductions.into_iter()
+                let new_deductions: Vec<_> = heuristic_deductions
+                    .into_iter()
                     .filter(|d| grid.get(d.row, d.col) == Some(crate::grid::CellState::Empty))
                     .collect();
-                
+
                 if !new_deductions.is_empty() {
                     if self.config.verbose {
                         println!("      → {} déductions", new_deductions.len());
@@ -133,11 +153,21 @@ impl AdvancedSolver {
 
         if self.config.verbose {
             println!("\n✅ Résolution terminée");
-            println!("   Total: {} déductions en {} itérations", all_deductions.len(), iteration);
+            println!(
+                "   Total: {} déductions en {} itérations",
+                all_deductions.len(),
+                iteration
+            );
             let empty_cells = grid.count_empty_cells();
             let total_cells = grid.width() * grid.height();
-            let progress = ((total_cells - empty_cells) as f64 / total_cells as f64 * 100.0) as usize;
-            println!("   Progression: {}% ({}/{} cases résolues)", progress, total_cells - empty_cells, total_cells);
+            let progress =
+                ((total_cells - empty_cells) as f64 / total_cells as f64 * 100.0) as usize;
+            println!(
+                "   Progression: {}% ({}/{} cases résolues)",
+                progress,
+                total_cells - empty_cells,
+                total_cells
+            );
         }
 
         Ok(all_deductions)
@@ -164,24 +194,24 @@ mod tests {
     fn test_advanced_solver_simple() {
         let mut grid = Grid::new(5, 5);
         let mut constraints = Constraints::new(5, 5);
-        
+
         constraints.set_row_constraint(0, vec![2]);
         constraints.set_row_constraint(1, vec![1, 1]);
         constraints.set_row_constraint(2, vec![5]);
         constraints.set_row_constraint(3, vec![1, 1]);
         constraints.set_row_constraint(4, vec![2]);
-        
+
         constraints.set_column_constraint(0, vec![2]);
         constraints.set_column_constraint(1, vec![1, 1]);
         constraints.set_column_constraint(2, vec![5]);
         constraints.set_column_constraint(3, vec![1, 1]);
         constraints.set_column_constraint(4, vec![2]);
-        
+
         let mut solver = AdvancedSolver::new();
         let deductions = solver.solve(&mut grid, &constraints).unwrap();
-        
+
         assert!(!deductions.is_empty());
-        
+
         assert_eq!(grid.get(2, 0), Some(CellState::Filled));
         assert_eq!(grid.get(2, 1), Some(CellState::Filled));
         assert_eq!(grid.get(2, 2), Some(CellState::Filled));

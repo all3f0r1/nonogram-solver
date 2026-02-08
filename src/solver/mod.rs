@@ -1,25 +1,19 @@
-pub mod line_solver;
-pub mod line_solver_optimized;
-pub mod cross_analysis;
 pub mod advanced_heuristics;
 pub mod advanced_solver;
-pub mod contradiction_detector;
 pub mod backtracking;
 pub mod backtracking_optimized;
+pub mod contradiction_detector;
+pub mod cross_analysis;
+pub mod line_solver;
+pub mod line_solver_optimized;
 pub mod parallel_solver;
 pub mod ultimate_solver;
 
-pub use line_solver_optimized::OptimizedLineSolver;
-pub use cross_analysis::CrossAnalyzer;
-pub use advanced_heuristics::AdvancedHeuristics;
 pub use advanced_solver::{AdvancedSolver, AdvancedSolverConfig};
-pub use contradiction_detector::ContradictionDetector;
-pub use backtracking::{BacktrackingSolver, BacktrackingConfig};
-pub use backtracking_optimized::{OptimizedBacktrackingSolver, OptimizedBacktrackingConfig};
-pub use parallel_solver::ParallelSolver;
+pub use line_solver_optimized::OptimizedLineSolver;
 pub use ultimate_solver::{UltimateSolver, UltimateSolverConfig};
 
-use crate::grid::{Grid, CellState, Constraints};
+use crate::grid::{CellState, Constraints, Grid};
 
 /// Représente une déduction faite par le solveur
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -44,7 +38,11 @@ impl NonogramSolver {
 
     /// Résout la grille autant que possible en utilisant la déduction logique
     /// Retourne la liste des déductions effectuées
-    pub fn solve(&mut self, grid: &mut Grid, constraints: &Constraints) -> Result<Vec<Deduction>, String> {
+    pub fn solve(
+        &mut self,
+        grid: &mut Grid,
+        constraints: &Constraints,
+    ) -> Result<Vec<Deduction>, String> {
         let mut all_deductions = Vec::new();
         let mut changed = true;
         let mut iteration = 0;
@@ -56,10 +54,12 @@ impl NonogramSolver {
 
             // Résoudre toutes les lignes
             for row in 0..grid.height() {
-                let row_constraint = constraints.get_row_constraint(row)
+                let row_constraint = constraints
+                    .get_row_constraint(row)
                     .ok_or_else(|| format!("Contrainte de ligne {} non trouvée", row))?;
-                
-                let current_line = grid.get_row(row)
+
+                let current_line = grid
+                    .get_row(row)
                     .ok_or_else(|| format!("Ligne {} non trouvée", row))?;
 
                 let deductions = self.line_solver.solve_line(&current_line, row_constraint)?;
@@ -75,13 +75,17 @@ impl NonogramSolver {
 
             // Résoudre toutes les colonnes
             for col in 0..grid.width() {
-                let col_constraint = constraints.get_column_constraint(col)
+                let col_constraint = constraints
+                    .get_column_constraint(col)
                     .ok_or_else(|| format!("Contrainte de colonne {} non trouvée", col))?;
-                
-                let current_column = grid.get_column(col)
+
+                let current_column = grid
+                    .get_column(col)
                     .ok_or_else(|| format!("Colonne {} non trouvée", col))?;
 
-                let deductions = self.line_solver.solve_line(&current_column, col_constraint)?;
+                let deductions = self
+                    .line_solver
+                    .solve_line(&current_column, col_constraint)?;
 
                 if !deductions.is_empty() {
                     changed = true;
@@ -102,7 +106,11 @@ impl NonogramSolver {
 
     /// Trouve uniquement les nouvelles déductions possibles sans modifier la grille
     /// Utile pour marquer les cases qui peuvent être déduites
-    pub fn find_next_deductions(&mut self, grid: &Grid, constraints: &Constraints) -> Result<Vec<Deduction>, String> {
+    pub fn find_next_deductions(
+        &mut self,
+        grid: &Grid,
+        constraints: &Constraints,
+    ) -> Result<Vec<Deduction>, String> {
         let mut grid_copy = grid.clone();
         self.solve(&mut grid_copy, constraints)
     }
@@ -133,24 +141,18 @@ mod tests {
     fn test_simple_solve() {
         let mut grid = Grid::new(5, 5);
         let rows = vec![
-            vec![5],  // Toute la ligne est noire
+            vec![5], // Toute la ligne est noire
             vec![1],
             vec![1],
             vec![1],
-            vec![5],  // Toute la ligne est noire
+            vec![5], // Toute la ligne est noire
         ];
-        let columns = vec![
-            vec![2],
-            vec![1, 1],
-            vec![1, 1],
-            vec![1, 1],
-            vec![2],
-        ];
+        let columns = vec![vec![2], vec![1, 1], vec![1, 1], vec![1, 1], vec![2]];
         let constraints = Constraints::new(5, 5, rows, columns).unwrap();
-        
+
         let solver = NonogramSolver::new();
         let deductions = solver.solve(&mut grid, &constraints).unwrap();
-        
+
         // Au moins les lignes complètes devraient être déduites
         assert!(!deductions.is_empty());
     }
